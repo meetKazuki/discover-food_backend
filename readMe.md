@@ -1,7 +1,7 @@
 # SETUP INSTRUCTION
 
-- To setup your environmental variable, create a new file called .env  
-  Copy the content of .env_example into .env 
+- You must setup environment variable to run the app, to do that, create a new file `.env`  
+  Copy the content of `.env_example` into `.env` 
   Edit the content to suit your needs
 
 - run `npm install` in the terminal/command line to install all dependencies
@@ -41,8 +41,8 @@
 - No adjustment should be made to the `app.js` in the root directory or any other files in the root directory. 
   All changes should be done inside the `src` sub folder.
 
-- Environmental variables should be entered into the .env file instead. 
-  The environmental variable set can be access in your node app using process.env.VARABLE_NAME
+- Environment variables should be entered into the .env file instead. 
+  The environment variable set can be access in your node app using process.env.VARABLE_NAME
 
 - No console.log is allowed. Please import the `logger.js` file under the `config` folder in the root directory
   Before you can use the logger function, you must enable the DEBUG environment variable (DEBUG=true) in the .env file
