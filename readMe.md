@@ -18,6 +18,8 @@
   `controller`: Contains functions that calls the route
   `functions`: Contain all the logic use by the controller.  
 
+  NOTE: The `index.js` should only be use to load your route file as shown in the comment found inside the `index.js` file in the `route` directory. Create should create all your route inside the `route` folder loaded by the `index.js` file. 
+
 - We use Eslint (airbnb) to enforce code standard and styling.
   When trying to start the app using the npm start, eslint is trigger to check for code conformity to standard.
 
@@ -41,5 +43,9 @@
 
 - Environmental variables should be entered into the .env file instead. 
   The environmental variable set can be access in your node app using process.env.VARABLE_NAME
-  
-     
+
+- No console.log is allowed. Please import the `logger.js` file under the `config` folder in the root directory
+  Before you can use the logger function, you must enable the DEBUG environment variable (DEBUG=true) in the .env file
+  e.g const logger = require('./config/logger')
+      logger.log('for debug and loging purpose')
+      logger.error('Use to log error'); 
