@@ -1,4 +1,4 @@
-#SETUP INSTRUCTION#
+# SETUP INSTRUCTION
 
 - To setup your environmental variable, create a new file called .env  
   Copy the content of .env_example into .env 
@@ -9,7 +9,7 @@
 - run `npm start` to start the app
 
 
-#CODING INSTRUCTION#
+## CODING INSTRUCTION
 
 - Understanding the folder structure.
   `src`: All codes must be written inside this sub folder depending on the task as explained below
