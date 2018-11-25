@@ -1,6 +1,6 @@
-const express = require('express');
+const express = require('express')
 
-const router = express();
+const router = express()
 // All your parent route link should be in this file
 // Create your route file in the routes folder and link your file here
 /**
@@ -8,4 +8,4 @@ const router = express();
  *     router.use("/user", userRoute)
  */
 
-module.exports = router;
+module.exports = router
