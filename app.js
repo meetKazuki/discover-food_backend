@@ -1,8 +1,8 @@
 const express = require('express')
 const path = require('path')
-const mongoose = require('mongoose')
 const morgan = require('morgan')
-const config = require('./config/index')
+const db = require('./utils/db')
+const config = require('./config/index.js')
 
 const route = require('./src/routes/')
 const logger = require('./config/logger')
@@ -24,15 +24,8 @@ app.use((err, req, res, next) => {
   logger.error(err)
 })
 
-// Connect to Database
-mongoose.connect(process.env.DATABASE_SERVER, (err) => {
-  if (err) {
-    logger.error(err)
-  } else {
-    logger.info('Successfully Connected to the database')
-  }
-})
+db.connect(config.dbUrl)
 
-app.listen(process.env.PORT)
+app.listen(config.port)
 
-logger.log(`Listening @ port ${process.env.PORT}`)
+logger.log(`Listening @ port ${config.port}`)

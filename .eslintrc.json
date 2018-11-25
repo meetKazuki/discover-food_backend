@@ -16,6 +16,7 @@
           2,
           "never"
         ],
+        "func-names": ["error", "never"],
         "valid-jsdoc": [
           "error",
           {
@@ -33,6 +34,14 @@
               "MethodDefinition": true,
               "ClassDeclaration": true
             }
+          }
+        ],
+        "space-before-function-paren": [
+          "error",
+          {
+            "anonymous": "always",
+            "named": "always",
+            "asyncArrow": "always"
           }
         ]
     }
