@@ -9,9 +9,10 @@
         "no-param-reassign": 0,
         "comma-dangle": 0,
         "eol-last": "off",
+        "no-underscore-dangle": "off",
         "quotes": [2, "single"],
         "no-unused-vars": "warn",
-        "no-console": "error",
+        "no-console": "warn",
         "semi": [
           2,
           "never"

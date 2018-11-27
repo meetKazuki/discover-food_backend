@@ -6,12 +6,14 @@ const environments = {}
 environments.development = {
   port: process.env.PORT,
   envName: 'development',
-  dbUrl: process.env.DATABASE_SERVER
+  dbUrl: process.env.DATABASE_SERVER,
+  secret: process.env.SECRET
 }
 
 environments.production = {
   port: process.env.PROD_PORT,
-  envName: 'production'
+  envName: 'production',
+  secret: process.env.SECRET
 }
 
 const currentEnvironment = typeof process.env.NODE_ENV === 'string'

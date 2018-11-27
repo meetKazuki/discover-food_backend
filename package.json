@@ -6,10 +6,13 @@
     "lint": "eslint ./src --fix"
   },
   "dependencies": {
+    "bcrypt": "^3.0.2",
     "dotenv": "^6.1.0",
     "express": "^4.16.4",
+    "jsonwebtoken": "^8.4.0",
     "mongoose": "^5.3.13",
-    "morgan": "^1.9.1"
+    "morgan": "^1.9.1",
+    "validator": "^10.9.0"
   },
   "name": "fuudnet",
   "version": "1.0.0",
