@@ -13,7 +13,6 @@ const { Schema } = mongoose
 const User = new Schema({
   firstName: {
     type: String,
-    required: true,
     validate: [{
       validator: isAlphaNumeric,
       msg: 'first name must be alphanumeric'
@@ -24,7 +23,6 @@ const User = new Schema({
   },
   lastName: {
     type: String,
-    required: true,
     validate: [{
       validator: isAlphaNumeric,
       msg: 'last name must be alphanumeric'
@@ -35,7 +33,6 @@ const User = new Schema({
   },
   password: {
     type: String,
-    required: true,
     unique: true,
     validate: [
       passwordLength,
@@ -44,7 +41,6 @@ const User = new Schema({
   },
   email: {
     type: String,
-    required: true,
     unique: true,
     validate: [
       isEmail,
@@ -53,7 +49,6 @@ const User = new Schema({
   },
   phone: {
     type: String,
-    required: true,
     unique: true,
     validate: [
       isMobilePhone,
