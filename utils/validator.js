@@ -10,7 +10,7 @@ exports.isAlphaNumeric = str => validator.isAlphanumeric(str)
 /**
  * Check if string is an email
  * @param {String} str string to check if an email
- * @return {Boolean} true if alpha numeric else false
+ * @return {Boolean} true if an email else false
  */
 exports.isEmail = str => validator.isEmail(str)
 
@@ -37,6 +37,7 @@ exports.passwordLength = str => validator.isLength(str, {
 /**
  * Check if string is a mobile phone number
  * @param {String} str string to check if its a mobile phone number
+ *
  * @return {Boolean} true if a mobile number else false
  */
 exports.isMobilePhone = str => validator.isMobilePhone(str)

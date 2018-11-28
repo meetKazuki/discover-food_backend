@@ -7,7 +7,8 @@ environments.development = {
   port: process.env.PORT,
   envName: 'development',
   dbUrl: process.env.DATABASE_SERVER,
-  secret: process.env.SECRET
+  tokenSecret: process.env.TOKEN_SECRET,
+  hashSecret: process.env.HASH_SECRET
 }
 
 environments.production = {

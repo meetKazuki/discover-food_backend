@@ -1,7 +1,7 @@
-const {
-  register
-} = require('./user')
+const express = require('express')
+const userRoute = require('./userRoute')
 
+const router = express.Router()
 // All your parent route link should be in this file
 // Create your route file in the routes folder and link your file here
 /**
@@ -9,8 +9,5 @@ const {
  *     router.use("/user", userRoute)
  */
 
-const router = (app) => {
-  app.post('/api/v1/register', register)
-}
-
+router.use('/api/v1/', userRoute)
 module.exports = router
