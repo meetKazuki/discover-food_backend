@@ -54,6 +54,12 @@ const User = new Schema({
       isMobilePhone,
       'must be a valid mobile phone number'
     ]
+  },
+  resetPasswordToken: {
+    type: String
+  },
+  resetPasswordExpires: {
+    type: Number
   }
 })
 
