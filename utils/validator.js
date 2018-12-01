@@ -40,7 +40,7 @@ exports.passwordLength = str => validator.isLength(str, {
  *
  * @return {Boolean} true if a mobile number else false
  */
-exports.isMobilePhone = str => validator.isMobilePhone(str)
+exports.isMobilePhone = str => validator.isMobilePhone(str, 'en-NG')
 
 /**
  * @param {Array} inputFields an array of form input fields

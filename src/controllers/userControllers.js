@@ -1,5 +1,4 @@
 const crypto = require('crypto')
-const mailjet = require('node-mailjet')
 
 const TokenManager = require('../../utils/token')
 const EmailServiceManager = require('../../utils/emailService')
