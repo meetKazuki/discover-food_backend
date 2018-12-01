@@ -7,7 +7,6 @@ const config = require('../config')
  * @return {String|Boolean} hashed value or false
  */
 exports.hash = (str) => {
-  console.log('password', str)
   if (typeof str === 'string' && str.length > 0) {
     const passwordHash = crypto.createHmac('sha256', config.hashSecret)
       .update(str).digest('hex')

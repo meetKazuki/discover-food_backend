@@ -9,6 +9,9 @@ const {
   mongoModelValidation
 } = require('../../utils/validator')
 
+// const { User } = require('../models')
+// User.create({ name: 'terungwa' }, { validateBeforeSave: true })
+
 /**
  * Register a new user into the application
  * Ensures all fields are not empty
@@ -41,15 +44,16 @@ const register = (req, res) => {
     email: req.body.email
   })
     .then((registeredUser) => {
-      const hashedPassword = hash(req.body.password)
+      // const hashedPassword = hash(req.body.password)
       if (!registeredUser) {
-        return req.Models.User.create({
-          firstName: req.body.firstName,
-          lastName: req.body.lastName,
-          email: req.body.email,
-          phone: req.body.phone,
-          password: hashedPassword
-        })
+        const user = new req.Models.User()
+        user.firstName = req.body.firstName
+        user.lastName = req.body.lastName
+        user.email = req.body.email
+        user.phone = req.body.phone
+        user.password = req.body.password
+
+        return user.save()
           .then((createdUser) => {
             const token = new TokenManager({
               id: createdUser._id
