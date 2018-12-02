@@ -59,11 +59,27 @@ const User = new Schema({
   },
   resetPasswordExpires: {
     type: Number
+  },
+  role: {
+    type: String
+  },
+  image: {
+    type: String
+  },
+  location: {
+    type: {
+      type: String,
+      enum: ['Point']
+    },
+    coordinates: {
+      type: [Number]
+    }
   }
 })
 
 User.pre('validate', function (next) {
   const user = this
+  console.log('user password', user.password)
   if (!passwordLength(user.password)) {
     return next({ message: 'password must have 6-255 characters' })
   }
@@ -81,6 +97,12 @@ User.pre('save', function (next) {
   const user = this
   user.password = hash(user.password)
   next()
+})
+
+User.set('toObject', {
+  transform: (doc, ret) => {
+    delete ret.password
+  }
 })
 
 module.exports = mongoose.model('User', User)

@@ -11,6 +11,7 @@ const {
 
 // const { User } = require('../models')
 // User.create({ name: 'terungwa' }, { validateBeforeSave: true })
+// User.findById('')
 
 /**
  * Register a new user into the application
@@ -44,7 +45,6 @@ const register = (req, res) => {
     email: req.body.email
   })
     .then((registeredUser) => {
-      // const hashedPassword = hash(req.body.password)
       if (!registeredUser) {
         const user = new req.Models.User()
         user.firstName = req.body.firstName
@@ -52,16 +52,21 @@ const register = (req, res) => {
         user.email = req.body.email
         user.phone = req.body.phone
         user.password = req.body.password
+        user.role = 'User'
 
         return user.save()
           .then((createdUser) => {
-            const token = new TokenManager({
-              id: createdUser._id
-            }, config.tokenSecret)
-
+            const token = new TokenManager()
             return res.status(201).send({
               message: 'User successfully registered',
-              data: [{ token: token.create() }]
+              data: [{
+                token: token.create(
+                  {
+                    id: createdUser._id,
+                    role: createdUser.role
+                  }, config.tokenSecret
+                )
+              }]
             })
           })
           .catch(createUserErr => res.status(422).send(createUserErr))
@@ -105,13 +110,18 @@ const login = (req, res) => {
     email: req.body.email
   })
     .then((registeredUser) => {
-      const token = new TokenManager({
-        id: registeredUser._id
-      }, config.tokenSecret)
+      const token = new TokenManager()
       if (hash(req.body.password) === registeredUser.password) {
         return res.status(201).send({
           message: 'User successfully logged in',
-          data: token.create()
+          data: [{
+            token: token.create(
+              {
+                id: registeredUser._id,
+                role: registeredUser.role
+              }, config.tokenSecret
+            )
+          }]
         })
       }
 
@@ -253,7 +263,7 @@ const resetPassword = (req, res) => {
     }
   })
     .then((registeredUser) => {
-      registeredUser.password = hash(req.body.password)
+      registeredUser.password = req.body.password
       registeredUser.resetPasswordToken = undefined
       registeredUser.resetPasswordExpires = undefined
       registeredUser.save()
@@ -284,11 +294,7 @@ const resetPassword = (req, res) => {
           message: 'Email to request password change successfully sent',
           data: message
         }))
-        .catch(() => {
-          const userUpdateError = new Error()
-          userUpdateError.message = 'Could not change password'
-          return res.status(500).send(userUpdateError)
-        })
+        .catch(err => res.status(500).send(err))
     })
     .catch(() => {
       const resetTokenError = new Error()
@@ -297,9 +303,70 @@ const resetPassword = (req, res) => {
     })
 }
 
+/**
+ * A user should be able to view his/her profile
+ * @param {Object} req request object
+ * @param {Object} res response object
+ *
+ * @return {Object} res response object
+ */
+const viewProfile = (req, res) => {
+  const { id } = req.currentUser
+  req.Models.User.findById(id)
+    .then(currentUser => res.status(200).send({
+      message: 'current user successfully found',
+      data: [
+        currentUser.toObject()
+      ]
+    }))
+    .catch(() => {
+      const userNotFound = new Error()
+      userNotFound.message = 'User not found'
+    })
+}
+
+/**
+ * A user should be able to edit his/her profile
+ * @param {Object} req request object
+ * @param {Object} res response object
+ *
+ * @return {Object} res response object
+ */
+const editProfile = (req, res) => {
+  const { id } = req.currentUser
+  const fieldInputs = ['firstName', 'lastName', 'imageUrl', 'phone', 'location']
+  const inputVals = fieldInputs.filter(fieldInput => req.body[fieldInput])
+    .map(value => ({
+      [value]: req.body[value]
+    }))
+
+  if (!inputVals.length) {
+    const missingFieldError = new Error()
+    missingFieldError.message = 'Missing required field'
+    return res.status(400).send(missingFieldError)
+  }
+
+  const reducer = (accumulator, currentValue) => {
+    const [key] = Object.keys(currentValue)
+    accumulator[key] = currentValue[key]
+    return accumulator
+  }
+  const modifiedInputValues = inputVals.reduce(reducer, {})
+  req.Models.User.findOneAndUpdate({
+    _id: id
+  }, modifiedInputValues, { new: true })
+    .then(updatedUser => res.status(200).send({
+      message: 'Successfully updated user',
+      data: updatedUser.toObject()
+    }))
+    .catch(err => res.status(400).send(err))
+}
+
 module.exports = {
   login,
   register,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  viewProfile,
+  editProfile
 }
