@@ -2,7 +2,8 @@
   "scripts": {
     "prestart": "eslint ./src --fix",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon app.js",
+    "start": "node app.js",
+    "dev-start": "nodemon app.js",
     "lint": "eslint ./src --fix"
   },
   "dependencies": {
@@ -11,6 +12,7 @@
     "jsonwebtoken": "^8.4.0",
     "mongoose": "^5.3.13",
     "morgan": "^1.9.1",
+    "node-mailjet": "^3.3.1",
     "validator": "^10.9.0"
   },
   "name": "fuudnet",

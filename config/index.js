@@ -8,13 +8,21 @@ environments.development = {
   envName: 'development',
   dbUrl: process.env.DATABASE_SERVER,
   tokenSecret: process.env.TOKEN_SECRET,
-  hashSecret: process.env.HASH_SECRET
+  hashSecret: process.env.HASH_SECRET,
+  mailjetPublicKey: process.env.MAIL_JET_PUBLIC_KEY,
+  mailjetSecretKey: process.env.MAIL_JET_SECRET_KEY,
+  mailjetEmailSender: process.env.MAIL_JET_EMAIL_SENDER,
+  mailjetVersion: process.env.MAIL_JET_VERSION
 }
 
 environments.production = {
   port: process.env.PROD_PORT,
   envName: 'production',
-  secret: process.env.SECRET
+  dbUrl: process.env.DATABASE_SERVER,
+  tokenSecret: process.env.TOKEN_SECRET,
+  hashSecret: process.env.HASH_SECRET,
+  mailjetPublicKey: process.env.MAIL_JET_PUBLIC_KEY,
+  mailjetSecretKey: process.env.MAIL_JET_SECRET_KEY
 }
 
 const currentEnvironment = typeof process.env.NODE_ENV === 'string'

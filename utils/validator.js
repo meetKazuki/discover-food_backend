@@ -25,6 +25,28 @@ exports.isLength = str => validator.isLength(str, {
 })
 
 /**
+ * Check if string has special characters
+ * @param {String} str string to check if it contains a special char
+ * @return {Boolean} true if it contains a special character else false
+ */
+exports.hasSpecialCharater = (str) => {
+  const hasSpecialChar = /[!@#$%^&*()_+\-=[\]{};':"|,.<>/?]/
+  if (hasSpecialChar.test(str)) return true
+  return false
+}
+
+/**
+ * Check if a string has a number
+ * @param {String} str string to check if it contains a number
+ * @return {Boolean} true if it contains a number else false
+ */
+exports.hasNumber = (str) => {
+  const hasNumber = /\d/
+  if (hasNumber.test(str)) return true
+  return false
+}
+
+/**
  * Check if string is within a length range
  * @param {String} str string to check if it meets required length
  * @return {Boolean} true if within range else false
@@ -40,7 +62,7 @@ exports.passwordLength = str => validator.isLength(str, {
  *
  * @return {Boolean} true if a mobile number else false
  */
-exports.isMobilePhone = str => validator.isMobilePhone(str)
+exports.isMobilePhone = str => validator.isMobilePhone(str, 'en-NG')
 
 /**
  * @param {Array} inputFields an array of form input fields
