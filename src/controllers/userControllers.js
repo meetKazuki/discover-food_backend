@@ -9,10 +9,6 @@ const {
   mongoModelValidation
 } = require('../../utils/validator')
 
-// const { User } = require('../models')
-// User.create({ name: 'terungwa' }, { validateBeforeSave: true })
-// User.findById('')
-
 /**
  * Register a new user into the application
  * Ensures all fields are not empty
@@ -362,11 +358,107 @@ const editProfile = (req, res) => {
     .catch(err => res.status(400).send(err))
 }
 
+/**
+ * A user can add a vendor as favorite
+ * A user cannot add self as a favorite
+ * A user cannot add a vendor more than once as favorite
+ * If a vendor already exists as a favorite, it will be removed on adding twice
+ * @param {Object} req
+ * @param {Object} res
+ *
+ * @return {Object} res response object
+ */
+const addVendorToFavorites = (req, res) => {
+  const { id } = req.currentUser
+  const { selectedVendorId } = req.body
+
+  if (!selectedVendorId) {
+    const missingFieldError = new Error()
+    missingFieldError.message = 'Missing required field'
+    return res.status(400).send(missingFieldError)
+  }
+
+  if (id === selectedVendorId) {
+    const addSelfAsFavError = new Error()
+    addSelfAsFavError.message = 'Cannot not add yourself as a favorite'
+    return res.status(400).send(addSelfAsFavError)
+  }
+  req.Models.Vendor.findOne({ user: selectedVendorId })
+    .then((vendorExists) => {
+      if (vendorExists) {
+        return req.Models.User.findOne({
+          _id: id
+        })
+          .then((registeredUser) => {
+            if (registeredUser) {
+              const vendorIsAFav = registeredUser.favoriteVendors.indexOf(vendorExists._id)
+              if (vendorIsAFav > -1) {
+                return req.Models.User.findOneAndUpdate({
+                  _id: id
+                }, {
+                  favoriteVendors: registeredUser.favoriteVendors.filter(item => item.toString() !== vendorExists._id.toString())
+                }, { new: true })
+                  .then(updatedUser => res.status(200).send({
+                    message: 'favorite vendor successfully removed',
+                    data: [updatedUser]
+                  }))
+                  .catch(() => {
+                    const couldNotUpdataVendorError = new Error()
+                    couldNotUpdataVendorError.message = 'Something went wrong, could not update favorite vendor'
+                    res.status(500).send(couldNotUpdataVendorError)
+                  })
+              }
+              return req.Models.User.findOneAndUpdate({
+                _id: id
+              }, {
+                favoriteVendors: registeredUser.favoriteVendors.concat([vendorExists._id])
+              }, { new: true })
+                .then(updatedUser => res.status(200).send({
+                  message: 'favorite vendor successfully added',
+                  data: [updatedUser]
+                }))
+                .catch(() => {
+                  const couldNotUpdataVendorError = new Error()
+                  couldNotUpdataVendorError.message = 'Something went wrong, could not update favorite vendor'
+                  res.status(500).send(couldNotUpdataVendorError)
+                })
+            }
+
+            const userDoesNotExistError = new Error()
+            userDoesNotExistError.message = 'User does not exist'
+            res.status(400).send(userDoesNotExistError)
+          })
+      }
+      const vendorDoesNotExist = new Error()
+      vendorDoesNotExist.message = 'Vendor does not exist'
+      return res.status(400).send(vendorDoesNotExist)
+    })
+    .catch(() => {
+      const serverError = new Error()
+      serverError.message = 'Something went wrong finding this vendor'
+      return res.status(500).send(serverError)
+    })
+}
+
+const viewFavoriteVendor = (req, res) => {
+  const { id } = req.currentUser
+  req.Models.User.findOne({ _id: id })
+    .populate('favoriteVendors')
+    .exec()
+    .then(vendor => res.status(200).send({
+      message: 'get favorite vendors successfully',
+      data: vendor.favoriteVendors
+    }))
+    .catch(() => res.status(400).send({ message: 'could not get user favorite vendor' }))
+}
+
 module.exports = {
   login,
   register,
   forgotPassword,
   resetPassword,
   viewProfile,
-  editProfile
+  editProfile,
+  viewFavoriteVendor,
+  addVendorToFavorites
 }

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+
 const { hash } = require('../../utils/hash')
 
 const {
@@ -35,8 +36,7 @@ const User = new Schema({
     }]
   },
   password: {
-    type: String,
-    unique: true
+    type: String
   },
   email: {
     type: String,
@@ -74,12 +74,15 @@ const User = new Schema({
     coordinates: {
       type: [Number]
     }
-  }
+  },
+  favoriteVendors: [{
+    type: Schema.Types.ObjectId, ref: 'Vendor'
+  }]
 })
 
 User.pre('validate', function (next) {
   const user = this
-  console.log('user password', user.password)
+  console.log('user', user.password, user._id)
   if (!passwordLength(user.password)) {
     return next({ message: 'password must have 6-255 characters' })
   }
@@ -96,6 +99,7 @@ User.pre('validate', function (next) {
 User.pre('save', function (next) {
   const user = this
   user.password = hash(user.password)
+  console.log('user', user.password)
   next()
 })
 

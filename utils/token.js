@@ -15,7 +15,7 @@ class TokenManager {
    */
   create (tokenData, tokenSecret) {
     return jwt.sign({
-      exp: Math.floor(Date.now() / 1000) + (60 * 60),
+      exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60),
       data: tokenData
     }, tokenSecret)
   }
