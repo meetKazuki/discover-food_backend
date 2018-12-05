@@ -39,7 +39,6 @@ const register = (req, res) => {
     email: req.body.email
   })
     .then((registeredUser) => {
-      console.log('user is not registered', registeredUser)
       if (!registeredUser) {
         const user = new req.Models.User()
         user.firstName = req.body.firstName
@@ -181,7 +180,7 @@ const login = (req, res) => {
 }
 
 /**
- * A user should be able to view his/her profile
+ * A vendor should be able to view his/her profile
  * @param {Object} req request object
  * @param {Object} res response object
  *
@@ -189,21 +188,32 @@ const login = (req, res) => {
  */
 const viewProfile = (req, res) => {
   const { id } = req.currentUser
-  req.Models.User.findById(id)
-    .then(currentUser => res.status(200).send({
-      message: 'current user successfully found',
-      data: [
-        currentUser.toObject()
-      ]
-    }))
+  req.Models.Vendor.findOne({
+    user: id
+  })
+    .populate('user')
+    .exec()
+    .then((vendor) => {
+      if (!vendor) {
+        const vendorNotFound = new Error()
+        vendorNotFound.message = 'User not registered as vendor'
+        return res.status(400).send(vendorNotFound)
+      }
+
+      return res.status(200).send({
+        message: 'get vendor successful',
+        data: vendor
+      })
+    })
     .catch(() => {
-      const userNotFound = new Error()
-      userNotFound.message = 'User not found'
+      const serverError = new Error()
+      serverError.message = 'User not registered as vendor'
+      res.status(500).send(serverError)
     })
 }
 
 /**
- * A user should be able to edit his/her profile
+ * A vendor should be able to edit his/her profile
  * @param {Object} req request object
  * @param {Object} res response object
  *
@@ -211,7 +221,7 @@ const viewProfile = (req, res) => {
  */
 const editProfile = (req, res) => {
   const { id } = req.currentUser
-  const fieldInputs = ['firstName', 'lastName', 'imageUrl', 'phone', 'location']
+  const fieldInputs = ['firstName', 'lastName', 'imageUrl', 'phone', 'location', 'address']
   const inputVals = fieldInputs.filter(fieldInput => req.body[fieldInput])
     .map(value => ({
       [value]: req.body[value]
@@ -223,12 +233,14 @@ const editProfile = (req, res) => {
     return res.status(400).send(missingFieldError)
   }
 
-  const reducer = (accumulator, currentValue) => {
+  // Create key value pairs for different inputs
+  // combine all inputs into one object
+  const combineInputsInObjReducer = (inputsObject, currentValue) => {
     const [key] = Object.keys(currentValue)
-    accumulator[key] = currentValue[key]
-    return accumulator
+    inputsObject[key] = currentValue[key]
+    return inputsObject
   }
-  const modifiedInputValues = inputVals.reduce(reducer, {})
+  const modifiedInputValues = inputVals.reduce(combineInputsInObjReducer, {})
   req.Models.User.findOneAndUpdate({
     _id: id
   }, modifiedInputValues, { new: true })

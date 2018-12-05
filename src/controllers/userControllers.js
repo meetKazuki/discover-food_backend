@@ -396,7 +396,9 @@ const addVendorToFavorites = (req, res) => {
                 return req.Models.User.findOneAndUpdate({
                   _id: id
                 }, {
-                  favoriteVendors: registeredUser.favoriteVendors.filter(item => item.toString() !== vendorExists._id.toString())
+                  favoriteVendors: registeredUser
+                    .favoriteVendors
+                    .filter(item => item.toString() !== vendorExists._id.toString())
                 }, { new: true })
                   .then(updatedUser => res.status(200).send({
                     message: 'favorite vendor successfully removed',

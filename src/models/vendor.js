@@ -9,9 +9,6 @@ const Vendor = Schema({
   address: {
     type: String
   },
-  meals: [{
-    type: Schema.Types.ObjectId, ref: 'Meal'
-  }],
   offline: {
     type: Boolean
   },

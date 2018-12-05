@@ -3,13 +3,28 @@ const mongoose = require('mongoose')
 const { Schema } = mongoose
 
 const Meal = Schema({
+  vendor: {
+    type: Schema.Types.ObjectId, ref: 'Vendor'
+  },
   name: {
     type: String
   },
   description: {
     type: String
   },
-  price: {
+  unitPriceType: {
+    type: String
+  },
+  unitPriceAmount: {
+    type: Number
+  },
+  mealImages: [{
+    type: String
+  }],
+  quantity: {
+    type: Number
+  },
+  timeToPrepare: {
     type: Number
   }
 })
