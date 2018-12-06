@@ -82,7 +82,6 @@ const User = new Schema({
 
 User.pre('validate', function (next) {
   const user = this
-  console.log('user', user.password, user._id)
   if (!passwordLength(user.password)) {
     return next({ message: 'password must have 6-255 characters' })
   }
@@ -99,7 +98,6 @@ User.pre('validate', function (next) {
 User.pre('save', function (next) {
   const user = this
   user.password = hash(user.password)
-  console.log('user', user.password)
   next()
 })
 
