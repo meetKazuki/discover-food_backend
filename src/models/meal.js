@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 
 const { Schema } = mongoose
 
-const Meal = Schema({
+const Meal = new Schema({
   vendor: {
     type: Schema.Types.ObjectId, ref: 'Vendor'
   },

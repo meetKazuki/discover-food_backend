@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 
 const { Schema } = mongoose
 
-const Vendor = Schema({
+const Vendor = new Schema({
   user: {
     type: Schema.Types.ObjectId, ref: 'User'
   },
