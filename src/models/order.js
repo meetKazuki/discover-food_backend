@@ -2,27 +2,31 @@ const mongoose = require('mongoose')
 
 const { Schema } = mongoose
 
+// var schema = new Schema({
+//   user: { type: Schema.Types.ObjectId, ref: 'User' },
+//   cart: { type: Object, required: true },
+//   address: { type: String, required: true },
+//   name: { type: String, required: true },
+//   paymentId: { type: String, required: true }
+// })
 const Order = Schema({
-  orderType: {
-    type: String
-  },
   dateCreated: {
     type: Date
   },
   customer: {
     type: Schema.Types.ObjectId, ref: 'User'
   },
-  quantity: {
-    type: Number
+  cart: {
+    type: Schema.Types.ObjectId, ref: 'Cart'
   },
   shippingAddress: {
     type: String
   },
-  subTotal: {
-    type: Number
-  },
   pickUpDate: {
     type: Date
+  },
+  paymentId: {
+    type: String
   }
 })
 
