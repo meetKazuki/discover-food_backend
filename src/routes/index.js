@@ -2,6 +2,7 @@ const express = require('express')
 const userRoute = require('./userRoute')
 const vendorRoute = require('./vendorRoute')
 const mealRoute = require('./mealRoute')
+const cartRoute = require('./cartRoute')
 
 const router = express.Router()
 // All your parent route link should be in this file
@@ -14,4 +15,5 @@ const router = express.Router()
 router.use('/api/v1/', userRoute)
 router.use('/api/v1/', vendorRoute)
 router.use('/api/v1/', mealRoute)
+router.use('/api/v1/', cartRoute)
 module.exports = router
