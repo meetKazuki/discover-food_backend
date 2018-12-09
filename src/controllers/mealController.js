@@ -7,7 +7,7 @@
  * @return {Object} res response object
  */
 const createMeal = (req, res) => {
-  const { id } = req.currentUser
+  const { currentUser } = req
 
   const fieldInputs = [
     'name',
@@ -37,7 +37,7 @@ const createMeal = (req, res) => {
   const modifiedInputValues = inputVals.reduce(combineInputsInObjReducer, {})
 
   req.Models.Vendor.findOne({
-    user: id
+    user: currentUser._id
   })
     .then((vendor) => {
       if (!vendor) {
@@ -76,7 +76,7 @@ const createMeal = (req, res) => {
  * @return {Object} response
  */
 const editMeal = (req, res) => {
-  const { id } = req.currentUser
+  const { currentUser } = req
   const { mealId } = req.params
   const fieldInputs = [
     'name',
@@ -106,7 +106,7 @@ const editMeal = (req, res) => {
   const modifiedInputValues = inputVals.reduce(combineInputsInObjReducer, {})
 
   req.Models.Vendor.findOne({
-    user: id
+    user: currentUser._id
   })
     .then((vendor) => {
       if (!vendor) {
@@ -145,33 +145,21 @@ const editMeal = (req, res) => {
  * @return {Object} response
  */
 const deleteMeal = (req, res) => {
-  const { id } = req.currentUser
   const { mealId } = req.params
 
-  req.Models.Vendor.findOne({
-    user: id
+  return req.Models.Meal.findOneAndDelete({
+    _id: mealId
   })
-    .then((vendor) => {
-      if (!vendor) {
-        const vendorNotFound = new Error()
-        vendorNotFound.message = 'User not registered as vendor'
-        return res.status(400).send(vendorNotFound)
+    .then((deletedMeal) => {
+      if (!deletedMeal) {
+        const mealDoesNotExistError = new Error()
+        mealDoesNotExistError.message = 'Meal does not exist'
+        res.status(400).send(mealDoesNotExistError)
       }
-
-      return req.Models.Meal.findOneAndDelete({
-        _id: mealId
+      return res.status(200).send({
+        message: 'Successfully deleted Meal',
+        data: deletedMeal.toObject()
       })
-        .then((deletedMeal) => {
-          if (!deletedMeal) {
-            const mealDoesNotExistError = new Error()
-            mealDoesNotExistError.message = 'Meal does not exist'
-            res.status(400).send(mealDoesNotExistError)
-          }
-          return res.status(200).send({
-            message: 'Successfully deleted Meal',
-            data: deletedMeal.toObject()
-          })
-        })
     })
     .catch(() => {
       const serverError = new Error()

@@ -307,18 +307,13 @@ const resetPassword = (req, res) => {
  * @return {Object} res response object
  */
 const viewProfile = (req, res) => {
-  const { id } = req.currentUser
-  req.Models.User.findById(id)
-    .then(currentUser => res.status(200).send({
-      message: 'current user successfully found',
-      data: [
-        currentUser.toObject()
-      ]
-    }))
-    .catch(() => {
-      const userNotFound = new Error()
-      userNotFound.message = 'User not found'
-    })
+  const { currentUser } = req
+  res.status(200).send({
+    message: 'current user successfully found',
+    data: [
+      currentUser.toObject()
+    ]
+  })
 }
 
 /**
@@ -329,7 +324,7 @@ const viewProfile = (req, res) => {
  * @return {Object} res response object
  */
 const editProfile = (req, res) => {
-  const { id } = req.currentUser
+  const { currentUser } = req
   const fieldInputs = ['firstName', 'lastName', 'imageUrl', 'phone', 'location']
   const inputVals = fieldInputs.filter(fieldInput => req.body[fieldInput])
     .map(value => ({
@@ -349,7 +344,7 @@ const editProfile = (req, res) => {
   }
   const modifiedInputValues = inputVals.reduce(reducer, {})
   req.Models.User.findOneAndUpdate({
-    _id: id
+    _id: currentUser._id
   }, modifiedInputValues, { new: true })
     .then(updatedUser => res.status(200).send({
       message: 'Successfully updated user',
@@ -369,7 +364,7 @@ const editProfile = (req, res) => {
  * @return {Object} res response object
  */
 const addVendorToFavorites = (req, res) => {
-  const { id } = req.currentUser
+  const { currentUser } = req
   const { selectedVendorId } = req.body
 
   if (!selectedVendorId) {
@@ -378,7 +373,7 @@ const addVendorToFavorites = (req, res) => {
     return res.status(400).send(missingFieldError)
   }
 
-  if (id === selectedVendorId) {
+  if (currentUser._id === selectedVendorId) {
     const addSelfAsFavError = new Error()
     addSelfAsFavError.message = 'Cannot not add yourself as a favorite'
     return res.status(400).send(addSelfAsFavError)
@@ -387,14 +382,14 @@ const addVendorToFavorites = (req, res) => {
     .then((vendorExists) => {
       if (vendorExists) {
         return req.Models.User.findOne({
-          _id: id
+          _id: currentUser._id
         })
           .then((registeredUser) => {
             if (registeredUser) {
               const vendorIsAFav = registeredUser.favoriteVendors.indexOf(vendorExists._id)
               if (vendorIsAFav > -1) {
                 return req.Models.User.findOneAndUpdate({
-                  _id: id
+                  _id: currentUser._id
                 }, {
                   favoriteVendors: registeredUser
                     .favoriteVendors
@@ -411,7 +406,7 @@ const addVendorToFavorites = (req, res) => {
                   })
               }
               return req.Models.User.findOneAndUpdate({
-                _id: id
+                _id: currentUser._id
               }, {
                 favoriteVendors: registeredUser.favoriteVendors.concat([vendorExists._id])
               }, { new: true })
@@ -443,8 +438,8 @@ const addVendorToFavorites = (req, res) => {
 }
 
 const viewFavoriteVendor = (req, res) => {
-  const { id } = req.currentUser
-  req.Models.User.findOne({ _id: id })
+  const { currentUser } = req
+  req.Models.User.findOne({ _id: currentUser._id })
     .populate('favoriteVendors')
     .exec()
     .then(vendor => res.status(200).send({

@@ -187,9 +187,9 @@ const login = (req, res) => {
  * @return {Object} res response object
  */
 const viewProfile = (req, res) => {
-  const { id } = req.currentUser
+  const { currentUser } = req
   req.Models.Vendor.findOne({
-    user: id
+    user: currentUser._id
   })
     .populate('user')
     .exec()
@@ -220,7 +220,7 @@ const viewProfile = (req, res) => {
  * @return {Object} res response object
  */
 const editProfile = (req, res) => {
-  const { id } = req.currentUser
+  const { currentUser } = req
   const fieldInputs = ['firstName', 'lastName', 'imageUrl', 'phone', 'location', 'address']
   const inputVals = fieldInputs.filter(fieldInput => req.body[fieldInput])
     .map(value => ({
@@ -242,7 +242,7 @@ const editProfile = (req, res) => {
   }
   const modifiedInputValues = inputVals.reduce(combineInputsInObjReducer, {})
   req.Models.User.findOneAndUpdate({
-    _id: id
+    _id: currentUser._id
   }, modifiedInputValues, { new: true })
     .then(updatedUser => res.status(200).send({
       message: 'Successfully updated user',

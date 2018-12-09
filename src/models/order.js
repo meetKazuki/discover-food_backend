@@ -22,7 +22,7 @@ const Order = Schema({
   shippingAddress: {
     type: String
   },
-  pickUpDate: {
+  pickUpTime: {
     type: Date
   },
   paymentId: {
