@@ -12,7 +12,11 @@ environments.development = {
   mailjetPublicKey: process.env.MAIL_JET_PUBLIC_KEY,
   mailjetSecretKey: process.env.MAIL_JET_SECRET_KEY,
   mailjetEmailSender: process.env.MAIL_JET_EMAIL_SENDER,
-  mailjetVersion: process.env.MAIL_JET_VERSION
+  mailjetVersion: process.env.MAIL_JET_VERSION,
+  paystackPublicKey: process.env.PAYSTACK_PUBLIC_KEY,
+  paystackSecretKey: process.env.PAYSTACK_SECRET_KEY,
+  geocodingApiKey: process.env.GEOCODING_API_KEY,
+  distanceMatrixApiKey: process.env.DISTANCE_MATRIX_API_KEY
 }
 
 environments.production = {
@@ -22,7 +26,13 @@ environments.production = {
   tokenSecret: process.env.TOKEN_SECRET,
   hashSecret: process.env.HASH_SECRET,
   mailjetPublicKey: process.env.MAIL_JET_PUBLIC_KEY,
-  mailjetSecretKey: process.env.MAIL_JET_SECRET_KEY
+  mailjetSecretKey: process.env.MAIL_JET_SECRET_KEY,
+  mailjetEmailSender: process.env.MAIL_JET_EMAIL_SENDER,
+  mailjetVersion: process.env.MAIL_JET_VERSION,
+  paystackPublicKey: process.env.PAYSTACK_PUBLIC_KEY,
+  paystackSecretKey: process.env.PAYSTACK_SECRET_KEY,
+  geocodingApiKey: process.env.GEOCODING_API_KEY,
+  distanceMatrixApiKey: process.env.DISTANCE_MATRIX_API_KEY
 }
 
 const currentEnvironment = typeof process.env.NODE_ENV === 'string'

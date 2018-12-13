@@ -318,7 +318,15 @@ const viewProfile = (req, res) => {
 
 /**
  * A user should be able to edit his/her profile
+ *
  * @param {Object} req request object
+ * @param {string} req.body.firstName - The first name of the user.
+ * @param {string} req.body.lastName - The last name of the user.
+ * @param {string} req.body.imageUrl - The image url of the user.
+ * @param {string} req.body.phone - The phone number of the user.
+ * @param {Object} req.body.location - The location of the user.
+ * @param {Object} req.body.location.latitude - The location latitude of the user.
+ * @param {Object} req.body.location.longitude - The location longitude of the user.
  * @param {Object} res response object
  *
  * @return {Object} res response object
@@ -327,9 +335,18 @@ const editProfile = (req, res) => {
   const { currentUser } = req
   const fieldInputs = ['firstName', 'lastName', 'imageUrl', 'phone', 'location']
   const inputVals = fieldInputs.filter(fieldInput => req.body[fieldInput])
-    .map(value => ({
-      [value]: req.body[value]
-    }))
+    .map((value) => {
+      if (value !== 'location') {
+        return {
+          [value]: req.body[value]
+        }
+      }
+      req.Models.Point.user = currentUser
+      req.Models.Point.type = 'Point'
+      req.models.Point.coordinates = [req.body[value].latitude, req.body[value].longitude]
+      return req.models.Point.save()
+        .then(point => ({ [value]: point }))
+    })
 
   if (!inputVals.length) {
     const missingFieldError = new Error()
