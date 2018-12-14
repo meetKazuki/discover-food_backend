@@ -2,6 +2,47 @@ const {
   hasEmptyField
 } = require('../../utils/validator')
 
+// {
+//   email:"some@body.nice",
+//   amount:"10000",
+//   metadata:{
+//     custom_fields:[
+//       {
+//         value:"makurdi",
+//         display_name: "Donation for",
+//         variable_name: "donation_for"
+//       }
+//     ]
+//   },
+//   bank:{
+//       code:"057",
+//       account_number:"0000000000"
+//   },
+//   birthday:"1995-12-23"
+// }
+
+/**
+ *
+ *
+  email:"some@body.nice",
+  amount:"10000",
+  metadata:{
+    custom_fields:[
+      {
+        value:"makurdi",
+        display_name: "Donation for",
+        variable_name: "donation_for"
+      }
+    ]
+  },
+  card:{
+    cvv:"408",
+    number:"4084084084084081",
+    expiry_month:"01",
+    expiry_year:"99"
+  }
+ */
+
 /**
  * A User should be able to create a cart
  * @param {Object} req request object
@@ -9,21 +50,100 @@ const {
  *
  * @return {Object} res response object
  */
-const createCart = (req, res) => {
+const createOrder = (req, res) => {
   const { currentUser } = req
-  const { mealId } = req.params
+  const { cartId } = req.params
 
-  const fieldIsEmpty = hasEmptyField([
-    'shippingAddress', 'pickUpTime'], req.body)
+  const inputVals = [
+    'shippingAddress',
+    'bankDetails',
+    'cardDetails'
+  ].filter(fieldInput => req.body[fieldInput])
+    .map(value => ({
+      [value]: req.body[value]
+    }))
 
-  if (!mealId && fieldIsEmpty) {
+  if (!cartId && !inputVals.length) {
     const missingFieldError = new Error()
-    missingFieldError.message = 'Meal id is missing'
+    missingFieldError.message = 'Field is missing'
     missingFieldError.statusCode = 400
     return Promise.reject(missingFieldError)
   }
 
+  const reducer = (accumulator, currentValue) => {
+    const [key] = Object.keys(currentValue)
+    accumulator[key] = currentValue[key]
+    return accumulator
+  }
+  const modifiedInputValues = inputVals.reduce(reducer, {})
+
+  if (!modifiedInputValues.shippingAddress) {
+    const mustHaveShippingAddressError = new Error()
+    mustHaveShippingAddressError.message = 'order must have a shipping address'
+    mustHaveShippingAddressError.statusCode = 400
+    return Promise.reject(mustHaveShippingAddressError)
+  }
   let meal
+
+  if (modifiedInputValues.bankDetails) {
+    const bankDetails = ['bankCode', 'bankAccountNumber', 'birthday']
+    const checkCompleteBankDetails = bankDetails.map((detail) => {
+      if (!modifiedInputValues.bankDetails[detail]) {
+        return false
+      }
+      return detail
+    })
+
+    if (checkCompleteBankDetails.indexOf(false) > -1) {
+      const mustProvideCorrectBankDetailsError = new Error()
+      mustProvideCorrectBankDetailsError.message = 'missing bank detail'
+      mustProvideCorrectBankDetailsError.statusCode = 400
+      return Promise.reject(mustProvideCorrectBankDetailsError)
+    }
+
+    const bank = {
+      code: modifiedInputValues.bankDetails.bankCode,
+      account_number: modifiedInputValues.bankDetails.bankAccountNumber
+    }
+
+    const { birthday } = modifiedInputValues.bankDetails
+
+    delete modifiedInputValues.bankDetails
+    modifiedInputValues.bank = bank
+    modifiedInputValues.birthday = birthday
+  }
+
+  if (modifiedInputValues.cardDetails) {
+    const cardDetails = ['cardCvv',
+      'cardNumber',
+      'cardExpiryMonth',
+      'cardExpiryYear']
+
+    const checkCompleteCardDetails = cardDetails.map((detail) => {
+      if (!modifiedInputValues.cardDetails[detail]) {
+        return false
+      }
+      return detail
+    })
+
+    if (checkCompleteCardDetails.indexOf(false) > -1) {
+      const mustProvideCorrectBankDetailsError = new Error()
+      mustProvideCorrectBankDetailsError.message = 'missing bank detail'
+      mustProvideCorrectBankDetailsError.statusCode = 400
+      return Promise.reject(mustProvideCorrectBankDetailsError)
+    }
+
+    const card = {
+      cvv: modifiedInputValues.cardDetails.cardCvv,
+      number: modifiedInputValues.cardDetails.cardNumber,
+      expiry_month: modifiedInputValues.cardDetails.cardExpiryMonth,
+      expiry_year: modifiedInputValues.cardDetails.cardExpiryYear
+    }
+
+    delete modifiedInputValues.cardDetails
+    modifiedInputValues.card = card
+  }
+
   // Verify that meal exists
   return req.Models.Meal.findOne({
     _id: mealId
@@ -68,7 +188,7 @@ const createCart = (req, res) => {
  *
  * @return {Object} res response object
  */
-const deleteMealInCart = (req, res) => {
+const cancelOrder = (req, res) => {
   const { currentUser } = req
   const { mealId } = req.params
 
@@ -262,8 +382,8 @@ const viewCartItems = (req, res) => {
 }
 
 module.exports = {
-  createCart,
-  deleteMealInCart,
+  createOrder,
+  cancelOrder,
   viewCartItems,
   addMealToCart
 }

@@ -335,18 +335,9 @@ const editProfile = (req, res) => {
   const { currentUser } = req
   const fieldInputs = ['firstName', 'lastName', 'imageUrl', 'phone', 'location']
   const inputVals = fieldInputs.filter(fieldInput => req.body[fieldInput])
-    .map((value) => {
-      if (value !== 'location') {
-        return {
-          [value]: req.body[value]
-        }
-      }
-      req.Models.Point.user = currentUser
-      req.Models.Point.type = 'Point'
-      req.models.Point.coordinates = [req.body[value].latitude, req.body[value].longitude]
-      return req.models.Point.save()
-        .then(point => ({ [value]: point }))
-    })
+    .map(value => ({
+      [value]: req.body[value]
+    }))
 
   if (!inputVals.length) {
     const missingFieldError = new Error()
@@ -360,14 +351,46 @@ const editProfile = (req, res) => {
     return accumulator
   }
   const modifiedInputValues = inputVals.reduce(reducer, {})
-  req.Models.User.findOneAndUpdate({
-    _id: currentUser._id
-  }, modifiedInputValues, { new: true })
-    .then(updatedUser => res.status(200).send({
+
+  req.Models.Point.create({
+    user: currentUser,
+    type: 'Point',
+    coordinates: [
+      modifiedInputValues.location.latitude,
+      modifiedInputValues.location.longitude
+    ]
+  })
+    .then((point) => {
+      if (!point) {
+        const pointNotCreatedError = new Error()
+        pointNotCreatedError.message = 'Something went wrong, could not create point'
+        pointNotCreatedError.statusCode = 500
+        return Promise.reject(pointNotCreatedError)
+      }
+      modifiedInputValues.location = point
+      return req.Models.User.findOneAndUpdate({
+        _id: currentUser._id
+      }, modifiedInputValues, { new: true })
+    })
+    .then((updatedUser) => {
+      if (!updatedUser) {
+        const userNotUpdatedError = new Error()
+        userNotUpdatedError.message = 'Something went wrong, user could not be updated'
+        userNotUpdatedError.statusCode = 500
+        return Promise.reject(userNotUpdatedError)
+      }
+
+      return req.Models.User.findById(updatedUser._id)
+        .populate('location')
+        .exec()
+    })
+    .then(userUpdate => res.status(200).send({
       message: 'Successfully updated user',
-      data: updatedUser.toObject()
+      data: userUpdate.toObject()
     }))
-    .catch(err => res.status(400).send(err))
+    .catch(err => res
+      .status(err.statusCode ? err.statusCode : 500)
+      .send(err.message ? err.message : err))
 }
 
 /**

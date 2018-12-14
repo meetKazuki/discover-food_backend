@@ -1,5 +1,5 @@
 const config = require('../../config')
-const geocoderService = require('../services/geocoderServices')
+const geocoderService = require('../../utils/geocoderServices')
 
 const {
   hasEmptyField

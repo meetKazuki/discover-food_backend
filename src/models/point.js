@@ -15,4 +15,4 @@ const Point = new Schema({
   }
 })
 
-module.exports = mongoose.model('Points', Point)
+module.exports = mongoose.model('Point', Point)
