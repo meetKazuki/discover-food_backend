@@ -19,7 +19,7 @@ const Meal = new Schema({
     type: Number
   },
   mealImages: [{
-    type: String
+    type: Schema.Types.ObjectId, ref: 'MealImage'
   }],
   quantity: {
     type: Number

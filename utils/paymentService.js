@@ -1,5 +1,4 @@
 const https = require('https')
-const queryString = require('querystring')
 const config = require('../config')
 
 /**

@@ -8,6 +8,7 @@ const router = express.Router()
 router.post('/meal/create', authorize('User'), mealController.createMeal)
 router.patch('/meal/edit/:mealId', authorize('User'), mealController.editMeal)
 router.delete('/meal/delete/:mealId', authorize('User'), mealController.deleteMeal)
-router.get('/meal/view/:mealId', authorize('User'), mealController.ViewMeal)
+router.get('/meal/view/:mealId', authorize('User'), mealController.viewMeal)
+router.put('/meal/upload/:mealId', authorize('User'), mealController.uploadMealImage)
 
 module.exports = router

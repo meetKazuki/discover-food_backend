@@ -195,7 +195,7 @@ const deleteMeal = (req, res) => {
  *
  * @return {Object} response
  */
-const ViewMeal = (req, res) => {
+const viewMeal = (req, res) => {
   const { mealId } = req.params
 
   if (!mealId) {
@@ -227,9 +227,111 @@ const ViewMeal = (req, res) => {
     })
 }
 
+/**
+ * A vendor should be able to images on a meal
+ * @param {Object} req
+ * @param {Object} res
+ *
+ * @return {Object} response
+ */
+const uploadMealImage = (req, res) => {
+  const { currentUser } = req
+  const { mealId } = req.params
+  const fieldInputs = [
+    'mealImages',
+  ]
+  const inputVals = fieldInputs.filter(fieldInput => req.body[fieldInput])
+    .map(value => ({
+      [value]: req.body[value]
+    }))
+
+  let images
+  let vendor
+  if (!mealId) {
+    const missingFieldError = new Error()
+    missingFieldError.message = 'Missing meal id'
+    return res.status(400).send(missingFieldError)
+  }
+
+  if (!inputVals.length) {
+    const missingFieldError = new Error()
+    missingFieldError.message = 'Missing required field'
+    return res.status(400).send(missingFieldError)
+  }
+
+  const combineInputsInObjReducer = (inputsObject, currentValue) => {
+    const [key] = Object.keys(currentValue)
+    inputsObject[key] = currentValue[key]
+    return inputsObject
+  }
+
+  const modifiedInputValues = inputVals.reduce(combineInputsInObjReducer, {})
+
+  req.Models.Vendor.findOne({
+    user: currentUser._id
+  })
+    .then((vendorExists) => {
+      if (!vendorExists) {
+        const vendorNotFound = new Error()
+        vendorNotFound.message = 'User not registered as vendor'
+        return res.status(400).send(vendorNotFound)
+      }
+
+      vendor = vendorExists
+      const createdImages = modifiedInputValues
+        .mealImages.map(image => ({
+          url: image
+        }))
+
+      return req.Models.MealImage.create(createdImages)
+    })
+    .then((savedImages) => {
+      images = savedImages
+      return req.Models.Meal.findOne({
+        _id: mealId,
+        vendor: vendor._id
+      })
+    })
+    .then((updatedMeal) => {
+      if (!updatedMeal) {
+        const mealDoesNotExistError = new Error()
+        mealDoesNotExistError.message = 'Meal does not exist'
+        return res.status(400).send(mealDoesNotExistError)
+      }
+
+      if ((updatedMeal.mealImages.length + images.length) > 10) {
+        const mealImagesNotGreaterThanTen = new Error()
+        mealImagesNotGreaterThanTen.message = 'The images of a meal cannot be greater than 10'
+        mealImagesNotGreaterThanTen.statusCode = 400
+        return res.status(400).send(mealImagesNotGreaterThanTen)
+      }
+
+      images.forEach((image) => {
+        updatedMeal.mealImages.push(image._id)
+      })
+      return updatedMeal.save()
+    })
+    .then(mealUpdate => req.Models.Meal.findOne({
+      _id: mealUpdate._id
+    })
+      .populate('mealImages')
+      .exec())
+    .then(updatedMealImage => res.status(200).send({
+      message: 'Successfully updated Meal',
+      data: updatedMealImage
+    }))
+    .catch(() => {
+      const serverError = new Error()
+      serverError.message = 'Something went wrong, meal could not be updated'
+      return res.status(500).send(serverError)
+    })
+}
+
+
 module.exports = {
   createMeal,
   editMeal,
   deleteMeal,
-  ViewMeal
+  viewMeal,
+  uploadMealImage
 }
