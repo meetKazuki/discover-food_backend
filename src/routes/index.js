@@ -4,6 +4,7 @@ const vendorRoute = require('./vendorRoute')
 const mealRoute = require('./mealRoute')
 const cartRoute = require('./cartRoute')
 const geocoderRoute = require('./geocoderRoute')
+const orderRoute = require('./orderRoute')
 
 const router = express.Router()
 // All your parent route link should be in this file
@@ -18,4 +19,5 @@ router.use('/api/v1/', vendorRoute)
 router.use('/api/v1/', mealRoute)
 router.use('/api/v1/', cartRoute)
 router.use('/api/v1/', geocoderRoute)
+router.use('/api/v1/', orderRoute)
 module.exports = router

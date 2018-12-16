@@ -164,6 +164,7 @@ const addMealToCart = (req, res) => {
   }
 
   let meal
+  let cart
   // Verify that user is registered
 
   // Verify that meal exists
@@ -191,7 +192,7 @@ const addMealToCart = (req, res) => {
         cartDoesNotExistError.statusCode = 400
         return Promise.reject(cartDoesNotExistError)
       }
-
+      cart = userCart
       return req.Models.Cart.findOne({
         _id: userCart._id
       }, {
@@ -201,13 +202,16 @@ const addMealToCart = (req, res) => {
         .exec()
     })
     .then((cartToUpdate) => {
+      // I am in cart
       const mealIsInCart = cartToUpdate.cartItems.indexOf(meal._id)
+      const totalPrice = cart.totalPrice + meal.unitPriceAmount
       if (mealIsInCart < 0) {
         return req.Models.Cart.findOneAndUpdate({
           _id: cartToUpdate._id
         },
         {
-          cartItems: cartToUpdate.cartItems.concat([meal._id])
+          cartItems: cartToUpdate.cartItems.concat([meal._id]),
+          totalPrice
         },
         {
           new: true

@@ -91,7 +91,7 @@ const editMeal = (req, res) => {
       [value]: req.body[value]
     }))
 
-  if (!inputVals.length) {
+  if (!mealId && !inputVals.length) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing required field'
     return res.status(400).send(missingFieldError)
@@ -116,19 +116,20 @@ const editMeal = (req, res) => {
       }
 
       return req.Models.Meal.findOneAndUpdate({
-        _id: mealId
+        _id: mealId,
+        vendor: vendor._id
       }, modifiedInputValues, { new: true })
-        .then((updatedMeal) => {
-          if (!updatedMeal) {
-            const mealDoesNotExistError = new Error()
-            mealDoesNotExistError.message = 'Meal does not exist'
-            res.status(400).send(mealDoesNotExistError)
-          }
-          return res.status(200).send({
-            message: 'Successfully updated Meal',
-            data: updatedMeal.toObject()
-          })
-        })
+    })
+    .then((updatedMeal) => {
+      if (!updatedMeal) {
+        const mealDoesNotExistError = new Error()
+        mealDoesNotExistError.message = 'Meal does not exist'
+        res.status(400).send(mealDoesNotExistError)
+      }
+      return res.status(200).send({
+        message: 'Successfully updated Meal',
+        data: updatedMeal.toObject()
+      })
     })
     .catch(() => {
       const serverError = new Error()
@@ -145,11 +146,30 @@ const editMeal = (req, res) => {
  * @return {Object} response
  */
 const deleteMeal = (req, res) => {
+  const { currentUser } = req
   const { mealId } = req.params
 
-  return req.Models.Meal.findOneAndDelete({
-    _id: mealId
+  if (!mealId) {
+    const missingFieldError = new Error()
+    missingFieldError.message = 'Missing required field'
+    return res.status(400).send(missingFieldError)
+  }
+
+  req.Models.Vendor.findOne({
+    user: currentUser._id
   })
+    .then((vendor) => {
+      if (!vendor) {
+        const vendorNotFound = new Error()
+        vendorNotFound.message = 'User not registered as vendor'
+        return res.status(400).send(vendorNotFound)
+      }
+
+      return req.Models.Meal.findOneAndDelete({
+        _id: mealId,
+        vendor: vendor._id
+      })
+    })
     .then((deletedMeal) => {
       if (!deletedMeal) {
         const mealDoesNotExistError = new Error()
@@ -168,8 +188,48 @@ const deleteMeal = (req, res) => {
     })
 }
 
+/**
+ * A user should be able to view a meal
+ * @param {Object} req
+ * @param {Object} res
+ *
+ * @return {Object} response
+ */
+const ViewMeal = (req, res) => {
+  const { mealId } = req.params
+
+  if (!mealId) {
+    const missingFieldError = new Error()
+    missingFieldError.message = 'Missing required field'
+    return res.status(400).send(missingFieldError)
+  }
+
+  req.Models.Meal.findOne({
+    _id: mealId
+  })
+    .populate('vendor')
+    .exec()
+    .then((meal) => {
+      if (!meal) {
+        const mealDoesNotExistError = new Error()
+        mealDoesNotExistError.message = 'Meal does not exist'
+        res.status(400).send(mealDoesNotExistError)
+      }
+      return res.status(200).send({
+        message: 'Successfully got a meal',
+        data: meal
+      })
+    })
+    .catch(() => {
+      const serverError = new Error()
+      serverError.message = 'Something went wrong, meal could not be fetched'
+      res.status(500).send(serverError)
+    })
+}
+
 module.exports = {
   createMeal,
   editMeal,
-  deleteMeal
+  deleteMeal,
+  ViewMeal
 }

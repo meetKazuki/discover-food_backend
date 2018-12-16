@@ -1,7 +1,9 @@
 const {
-  hasEmptyField
-} = require('../../utils/validator')
-
+  paymentService,
+  getBanks,
+  verifyBankAccount,
+  verifyTransaction
+} = require('../../utils/paymentService')
 // {
 //   email:"some@body.nice",
 //   amount:"10000",
@@ -44,7 +46,7 @@ const {
  */
 
 /**
- * A User should be able to create a cart
+ * A User should be able to create an order with a bank account
  * @param {Object} req request object
  * @param {Object} res response object
  *
@@ -53,11 +55,11 @@ const {
 const createOrder = (req, res) => {
   const { currentUser } = req
   const { cartId } = req.params
-
   const inputVals = [
     'shippingAddress',
-    'bankDetails',
-    'cardDetails'
+    'bankName',
+    'birthday',
+    'bankAccountNumber'
   ].filter(fieldInput => req.body[fieldInput])
     .map(value => ({
       [value]: req.body[value]
@@ -66,8 +68,7 @@ const createOrder = (req, res) => {
   if (!cartId && !inputVals.length) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Field is missing'
-    missingFieldError.statusCode = 400
-    return Promise.reject(missingFieldError)
+    return res.status(400).send(missingFieldError)
   }
 
   const reducer = (accumulator, currentValue) => {
@@ -80,103 +81,135 @@ const createOrder = (req, res) => {
   if (!modifiedInputValues.shippingAddress) {
     const mustHaveShippingAddressError = new Error()
     mustHaveShippingAddressError.message = 'order must have a shipping address'
-    mustHaveShippingAddressError.statusCode = 400
-    return Promise.reject(mustHaveShippingAddressError)
+    return res.status(400).send(mustHaveShippingAddressError)
   }
-  let meal
 
-  if (modifiedInputValues.bankDetails) {
-    const bankDetails = ['bankCode', 'bankAccountNumber', 'birthday']
-    const checkCompleteBankDetails = bankDetails.map((detail) => {
-      if (!modifiedInputValues.bankDetails[detail]) {
-        return false
+  // if (!modifiedInputValues.bankDetails && !modifiedInputValues.cardDetails) {
+  //   const mustHaveBankOrCardDetailsError = new Error()
+  //   mustHaveBankOrCardDetailsError.message = 'order must have card or bank details'
+  //   return res.status(400).send(mustHaveBankOrCardDetailsError)
+  // }
+  let cart
+  let paymentInfo
+
+  if (
+    !modifiedInputValues.bankName
+    || !modifiedInputValues.birthday
+    || !modifiedInputValues.bankAccountNumber) {
+    const mustProvideCorrectBankDetailsError = new Error()
+    mustProvideCorrectBankDetailsError.message = 'missing bank detail'
+    return res.status(400).send(mustProvideCorrectBankDetailsError)
+  }
+
+  // if (modifiedInputValues.cardDetails) {
+  //   const cardDetails = ['cardCvv',
+  //     'cardNumber',
+  //     'cardExpiryMonth',
+  //     'cardExpiryYear']
+
+  //   const checkCompleteCardDetails = cardDetails.map((detail) => {
+  //     if (!modifiedInputValues.cardDetails[detail]) {
+  //       return false
+  //     }
+  //     return detail
+  //   })
+
+  //   if (checkCompleteCardDetails.indexOf(false) > -1) {
+  //     const mustProvideCorrectBankDetailsError = new Error()
+  //     mustProvideCorrectBankDetailsError.message = 'missing bank detail'
+  //     mustProvideCorrectBankDetailsError.statusCode = 400
+  //     return res.status(400).send(mustProvideCorrectBankDetailsError)
+  //   }
+
+  //   paymentInfo.card = {
+  //     cvv: modifiedInputValues.cardDetails.cardCvv,
+  //     number: modifiedInputValues.cardDetails.cardNumber,
+  //     expiry_month: modifiedInputValues.cardDetails.cardExpiryMonth,
+  //     expiry_year: modifiedInputValues.cardDetails.cardExpiryYear
+  //   }
+
+  //   delete modifiedInputValues.cardDetails
+  // }
+
+  return getBanks()
+    .then((banks) => {
+      const bankData = banks.data.filter(bank => bank.name === modifiedInputValues.bankName)
+      if (!bankData.length) {
+        const bankNotSupportedError = new Error()
+        bankNotSupportedError.message = 'This bank is currently not supported'
+        bankNotSupportedError.statusCode = 400
+        return Promise.reject(bankNotSupportedError)
       }
-      return detail
+      paymentInfo = {
+        bank: {
+          code: bankData[0].code,
+          account_number: modifiedInputValues.bankAccountNumber,
+        },
+        birthday: modifiedInputValues.birthday,
+        email: currentUser.email
+      }
+
+      return verifyBankAccount(paymentInfo.bank.account_number, paymentInfo.bank.code)
     })
-
-    if (checkCompleteBankDetails.indexOf(false) > -1) {
-      const mustProvideCorrectBankDetailsError = new Error()
-      mustProvideCorrectBankDetailsError.message = 'missing bank detail'
-      mustProvideCorrectBankDetailsError.statusCode = 400
-      return Promise.reject(mustProvideCorrectBankDetailsError)
-    }
-
-    const bank = {
-      code: modifiedInputValues.bankDetails.bankCode,
-      account_number: modifiedInputValues.bankDetails.bankAccountNumber
-    }
-
-    const { birthday } = modifiedInputValues.bankDetails
-
-    delete modifiedInputValues.bankDetails
-    modifiedInputValues.bank = bank
-    modifiedInputValues.birthday = birthday
-  }
-
-  if (modifiedInputValues.cardDetails) {
-    const cardDetails = ['cardCvv',
-      'cardNumber',
-      'cardExpiryMonth',
-      'cardExpiryYear']
-
-    const checkCompleteCardDetails = cardDetails.map((detail) => {
-      if (!modifiedInputValues.cardDetails[detail]) {
-        return false
+    .then((validBankAccount) => {
+      if (
+        !validBankAccount.data.account_number
+        && !validBankAccount.data.account_name) {
+        const accountNotValidError = new Error()
+        accountNotValidError.message = 'This is not a valid account'
+        accountNotValidError.statusCode = 400
+        return Promise.reject(accountNotValidError)
       }
-      return detail
-    })
-
-    if (checkCompleteCardDetails.indexOf(false) > -1) {
-      const mustProvideCorrectBankDetailsError = new Error()
-      mustProvideCorrectBankDetailsError.message = 'missing bank detail'
-      mustProvideCorrectBankDetailsError.statusCode = 400
-      return Promise.reject(mustProvideCorrectBankDetailsError)
-    }
-
-    const card = {
-      cvv: modifiedInputValues.cardDetails.cardCvv,
-      number: modifiedInputValues.cardDetails.cardNumber,
-      expiry_month: modifiedInputValues.cardDetails.cardExpiryMonth,
-      expiry_year: modifiedInputValues.cardDetails.cardExpiryYear
-    }
-
-    delete modifiedInputValues.cardDetails
-    modifiedInputValues.card = card
-  }
-
-  // Verify that meal exists
-  return req.Models.Meal.findOne({
-    _id: mealId
-  })
-    .populate('vendor')
-    .exec()
-    .then((mealExists) => {
-      if (!mealExists) {
-        const mealDoesNotExistError = new Error()
-        mealDoesNotExistError.message = 'Meal does not exist'
-        mealDoesNotExistError.statusCode = 400
-        return Promise.reject(mealDoesNotExistError)
-      }
-      meal = mealExists
       return req.Models.Cart.findOne({
         user: currentUser._id
       })
+        .populate('cartItems')
+        .exec()
     })
-    .then((userCart) => {
-      const Cart = new req.Models.Cart()
-      if (!userCart) {
-        return Cart.createCart(meal, currentUser, req.body.orderType, req.body.foodSize)
-          .then(createdCart => res.status(201).send({
-            message: 'Cart successfully created',
-            data: [createdCart]
-          }))
+    .then((cartExists) => {
+      if (!cartExists) {
+        const cartDoesNotExistError = new Error()
+        cartDoesNotExistError.message = 'Cart does not exist'
+        cartDoesNotExistError.statusCode = 400
+        return Promise.reject(cartDoesNotExistError)
+      }
+      cart = cartExists
+      paymentInfo.amount = cartExists.cartItems
+        .reduce((currentPrice, cartItem) => currentPrice + cartItem.unitPriceAmount, 0)
+
+      return paymentService(paymentInfo)
+    })
+    .then((charge) => {
+      if (!charge.data && !charge.data.reference) {
+        const chargeError = new Error()
+        chargeError.message = 'Something went wrong, no charge created'
+        chargeError.statusCode = 500
+        return Promise.reject(chargeError)
+      }
+      return verifyTransaction(charge.data.reference)
+    })
+    .then((verifiedTransaction) => {
+      if (verifiedTransaction.data.status === 'failed') {
+        const transactionFailedError = new Error()
+        transactionFailedError.message = 'this transaction was not a success'
+        transactionFailedError.statusCode = 400
+        return Promise.reject(transactionFailedError)
       }
 
-      const cartAlreadyExistsError = new Error()
-      cartAlreadyExistsError.message = 'cart already exists cannot be created'
-      cartAlreadyExistsError.statusCode = 400
-      return Promise.reject(cartAlreadyExistsError)
+      if (
+        verifiedTransaction.data.status === 'success'
+        || verifiedTransaction.data.status === 'ongoing'
+      ) {
+        return req.Models.Order.create({
+          dateCreated: Date.now(),
+          customer: currentUser._id,
+          cart: cart._id,
+          shippingAddress: modifiedInputValues.shippingAddress,
+          paymentId: verifiedTransaction.data.id
+        })
+      }
     })
+    .then(orderCreated => res.status(201).send(orderCreated))
     .catch(err => res.status(err.statusCode ? err.statusCode : 500)
       .send({ message: err.message ? err.message : 'Something something went wrong, could not to cart' }))
 }

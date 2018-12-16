@@ -26,7 +26,7 @@ const Order = Schema({
     type: Date
   },
   paymentId: {
-    type: String
+    type: Number
   }
 })
 
