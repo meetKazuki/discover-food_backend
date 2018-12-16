@@ -89,6 +89,46 @@ const getBanks = () => new Promise((resolve, reject) => {
 })
 
 /**
+ * Get list of banks
+ * @return {Promise} promise
+ */
+
+const verifyCardBin = cardBin => new Promise((resolve, reject) => {
+  const requestDetails = {
+    protocol: 'https:',
+    hostname: 'api.paystack.co',
+    method: 'GET',
+    path: `/decision/bin/${cardBin}`
+  }
+
+
+  const req = https.request(requestDetails, (res) => {
+    const status = res.statusCode
+    if (status === 200 || status === 201) {
+      let body = ''
+      res.on('data', (data) => {
+        body += data
+      })
+      return res.on('end', () => {
+        const parsed = JSON.parse(body)
+        return resolve(parsed)
+      })
+    }
+    const payStackError = new Error()
+    payStackError.statusCode = status
+    payStackError.message = res.statusMessage
+    reject(payStackError)
+  })
+
+  req.on('error', (e) => {
+    reject(e)
+  })
+
+  // End the request
+  return req.end()
+})
+
+/**
  * Verify that a bank account is valid
  * @param {String} accountNumber customer account number
  * @param {String} bankCode code for bank of customer
@@ -152,7 +192,6 @@ const verifyTransaction = chargeReference => new Promise((resolve, reject) => {
     }
   }
 
-  console.log('transaction', chargeReference)
   const req = https.request(requestDetails, (res) => {
     const status = res.statusCode
     if (status === 200 || status === 201) {
@@ -184,5 +223,6 @@ module.exports = {
   paymentService,
   getBanks,
   verifyBankAccount,
-  verifyTransaction
+  verifyTransaction,
+  verifyCardBin
 }

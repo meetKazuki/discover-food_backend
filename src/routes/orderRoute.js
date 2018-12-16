@@ -5,9 +5,7 @@ const authorize = require('../../utils/authorize')
 
 const router = express.Router()
 
-router.post('/order/create/:cartId', authorize('User'), checkoutController.createOrder)
-// router.delete('/cart/delete/:mealId', authorize('User'), cartController.deleteMealInCart)
-// router.get('/cart/view/', authorize('User'), cartController.viewCartItems)
-// router.patch('/cart/add-meal/:mealId', authorize('User'), cartController.addMealToCart)
+router.post('/order/create/:cartId/bank-account', authorize('User'), checkoutController.checkoutWithBankAccount)
+router.post('/order/create/:cartId/card', authorize('User'), checkoutController.checkoutWithCard)
 
 module.exports = router
