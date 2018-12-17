@@ -31,10 +31,17 @@ const paymentService = paystackChargeData => new Promise((resolve, reject) => {
         return resolve(parsed)
       })
     }
-    const payStackError = new Error()
-    payStackError.statusCode = status
-    payStackError.message = res.statusMessage
-    return reject(payStackError)
+    let err = ''
+    res.on('data', (data) => {
+      err += data
+    })
+    return res.on('end', () => {
+      const parsed = JSON.parse(err)
+      const payStackError = new Error()
+      payStackError.statusCode = status
+      payStackError.message = parsed.message
+      return reject(payStackError)
+    })
   })
 
   req.on('error', (e) => {
@@ -73,10 +80,17 @@ const getBanks = () => new Promise((resolve, reject) => {
         return resolve(parsed)
       })
     }
-    const payStackError = new Error()
-    payStackError.statusCode = status
-    payStackError.message = res.statusMessage
-    reject(payStackError)
+    let err = ''
+    res.on('data', (data) => {
+      err += data
+    })
+    return res.on('end', () => {
+      const parsed = JSON.parse(err)
+      const payStackError = new Error()
+      payStackError.statusCode = status
+      payStackError.message = parsed.message
+      return reject(payStackError)
+    })
   })
 
   req.on('error', (e) => {
@@ -113,10 +127,17 @@ const verifyCardBin = cardBin => new Promise((resolve, reject) => {
         return resolve(parsed)
       })
     }
-    const payStackError = new Error()
-    payStackError.statusCode = status
-    payStackError.message = res.statusMessage
-    reject(payStackError)
+    let err = ''
+    res.on('data', (data) => {
+      err += data
+    })
+    return res.on('end', () => {
+      const parsed = JSON.parse(err)
+      const payStackError = new Error()
+      payStackError.statusCode = status
+      payStackError.message = parsed.message
+      return reject(payStackError)
+    })
   })
 
   req.on('error', (e) => {
@@ -159,10 +180,17 @@ const verifyBankAccount = (accountNumber, bankCode) => new Promise((resolve, rej
         return resolve(parsed)
       })
     }
-    const payStackError = new Error()
-    payStackError.statusCode = status
-    payStackError.message = res.statusMessage
-    reject(payStackError)
+    let err = ''
+    res.on('data', (data) => {
+      err += data
+    })
+    return res.on('end', () => {
+      const parsed = JSON.parse(err)
+      const payStackError = new Error()
+      payStackError.statusCode = status
+      payStackError.message = parsed.message
+      return reject(payStackError)
+    })
   })
 
   req.on('error', (e) => {
@@ -203,10 +231,17 @@ const verifyTransaction = chargeReference => new Promise((resolve, reject) => {
         return resolve(parsed)
       })
     }
-    const payStackError = new Error()
-    payStackError.statusCode = status
-    payStackError.message = res.statusMessage
-    reject(payStackError)
+    let err = ''
+    res.on('data', (data) => {
+      err += data
+    })
+    return res.on('end', () => {
+      const parsed = JSON.parse(err)
+      const payStackError = new Error()
+      payStackError.statusCode = status
+      payStackError.message = parsed.message
+      return reject(payStackError)
+    })
   })
 
   req.on('error', (e) => {
@@ -218,10 +253,65 @@ const verifyTransaction = chargeReference => new Promise((resolve, reject) => {
 })
 
 
+/**
+ * Make payment using paystack
+ * @param {Object} paystackChargeData the configuration for the paystack service
+ * @return {Promise} promise
+ */
+
+const createRefund = transactionId => new Promise((resolve, reject) => {
+  const stringPayload = JSON.stringify({ transaction: transactionId })
+  const requestDetails = {
+    protocol: 'https:',
+    hostname: 'api.paystack.co',
+    method: 'POST',
+    path: '/refund',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${config.paystackSecretKey}`
+    }
+  }
+
+  const req = https.request(requestDetails, (res) => {
+    const status = res.statusCode
+    if (status === 200 || status === 201) {
+      let body = ''
+      res.on('data', (data) => {
+        body += data
+      })
+      return res.on('end', () => {
+        const parsed = JSON.parse(body)
+        return resolve(parsed)
+      })
+    }
+
+    let err = ''
+    res.on('data', (data) => {
+      err += data
+    })
+    return res.on('end', () => {
+      const parsed = JSON.parse(err)
+      const payStackError = new Error()
+      payStackError.statusCode = status
+      payStackError.message = parsed.message
+      return reject(payStackError)
+    })
+  })
+
+  req.on('error', (e) => {
+    reject(e)
+  })
+
+  req.write(stringPayload)
+
+  req.end()
+})
+
 module.exports = {
   paymentService,
   getBanks,
   verifyBankAccount,
   verifyTransaction,
-  verifyCardBin
+  verifyCardBin,
+  createRefund
 }

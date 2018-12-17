@@ -3,7 +3,8 @@ const {
   getBanks,
   verifyBankAccount,
   verifyTransaction,
-  verifyCardBin
+  verifyCardBin,
+  createRefund
 } = require('../../utils/paymentService')
 
 /**
@@ -92,16 +93,16 @@ const checkoutWithBankAccount = (req, res) => {
         .populate('cartItems')
         .exec()
     })
-    .then((cartExists) => {
-      if (!cartExists) {
-        const cartDoesNotExistError = new Error()
-        cartDoesNotExistError.message = 'Cart does not exist'
-        cartDoesNotExistError.statusCode = 400
-        return Promise.reject(cartDoesNotExistError)
+    .then((orderExists) => {
+      if (!orderExists) {
+        const orderDoesNotExistError = new Error()
+        orderDoesNotExistError.message = 'Cart does not exist'
+        orderDoesNotExistError.statusCode = 400
+        return Promise.reject(orderDoesNotExistError)
       }
-      cart = cartExists
-      paymentInfo.amount = cartExists.cartItems
-        .reduce((currentPrice, cartItem) => currentPrice + cartItem.unitPriceAmount, 0)
+      cart = orderExists
+      paymentInfo.amount = orderExists.cartItems
+        .reduce((currentPrice, cartItem) => currentPrice + cartItem.unitPriceAmount, 0) * 100
 
       return paymentService(paymentInfo)
     })
@@ -131,13 +132,17 @@ const checkoutWithBankAccount = (req, res) => {
           customer: currentUser._id,
           cart: cart._id,
           shippingAddress: modifiedInputValues.shippingAddress,
-          paymentId: verifiedTransaction.data.id
+          paymentId: verifiedTransaction.data.id,
+          referenceId: verifiedTransaction.data.reference,
+          amount: verifiedTransaction.data.amount
         })
       }
     })
     .then(orderCreated => res.status(201).send(orderCreated))
     .catch(err => res.status(err.statusCode ? err.statusCode : 500)
-      .send({ message: err.message ? err.message : 'Something something went wrong, could not to cart' }))
+      .send({
+        message: err.message ? err.message : 'Something something went wrong, could not create order'
+      }))
 }
 
 /**
@@ -217,16 +222,16 @@ const checkoutWithCard = (req, res) => {
         .populate('cartItems')
         .exec()
     })
-    .then((cartExists) => {
-      if (!cartExists) {
-        const cartDoesNotExistError = new Error()
-        cartDoesNotExistError.message = 'Cart does not exist'
-        cartDoesNotExistError.statusCode = 400
-        return Promise.reject(cartDoesNotExistError)
+    .then((orderExists) => {
+      if (!orderExists) {
+        const orderDoesNotExistError = new Error()
+        orderDoesNotExistError.message = 'Cart does not exist'
+        orderDoesNotExistError.statusCode = 400
+        return Promise.reject(orderDoesNotExistError)
       }
-      cart = cartExists
-      paymentInfo.amount = cartExists.cartItems
-        .reduce((currentPrice, cartItem) => currentPrice + cartItem.unitPriceAmount, 0)
+      cart = orderExists
+      paymentInfo.amount = orderExists.cartItems
+        .reduce((currentPrice, cartItem) => currentPrice + cartItem.unitPriceAmount, 0) * 100
 
       return paymentService(paymentInfo)
     })
@@ -256,17 +261,63 @@ const checkoutWithCard = (req, res) => {
           customer: currentUser._id,
           cart: cart._id,
           shippingAddress: modifiedInputValues.shippingAddress,
-          paymentId: verifiedTransaction.data.id
+          paymentId: verifiedTransaction.data.id,
+          referenceId: verifiedTransaction.data.reference,
+          amount: verifiedTransaction.data.amount
         })
       }
     })
     .then(orderCreated => res.status(201).send(orderCreated))
     .catch(err => res.status(err.statusCode ? err.statusCode : 500)
-      .send({ message: err.message ? err.message : 'Something something went wrong, could not to cart' }))
+      .send({
+        message: err.message ? err.message : 'Something something went wrong, could not create order'
+      }))
 }
 
 
+/**
+ * A User should be able to cancel an order created
+ * @param {Object} req request object
+ * @param {Object} res response object
+ *
+ * @return {Object} res response object
+ */
+const cancelOrder = (req, res) => {
+  const { currentUser } = req
+  const { orderId } = req.params
+
+  if (!orderId) {
+    const missingFieldError = new Error()
+    missingFieldError.message = 'Missing order id'
+    return res.status(400).send(missingFieldError)
+  }
+
+  let order
+
+  return req.Models.Order.findById(orderId)
+    .then((orderExists) => {
+      if (!orderExists) {
+        const orderDoesNotExistError = new Error()
+        orderDoesNotExistError.message = 'Order does not exist'
+        orderDoesNotExistError.statusCode = 400
+        return Promise.reject(orderDoesNotExistError)
+      }
+      order = orderExists
+
+      return createRefund(orderExists.referenceId)
+    })
+    .then(() => req.Models.findOneAndDelete({
+      _id: order._id
+    }, { new: true })
+      .then(() => res.status(200).send({
+        message: 'Order successfull canceled'
+      })))
+    .catch(err => res.status(err.statusCode ? err.statusCode : 500)
+      .send({ message: err.message ? err.message : 'Something something went wrong, could not cancel order' }))
+}
+
 module.exports = {
   checkoutWithBankAccount,
-  checkoutWithCard
+  checkoutWithCard,
+  cancelOrder
 }
