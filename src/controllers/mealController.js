@@ -26,6 +26,7 @@ const createMeal = (req, res) => {
   if (!inputVals.length) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing required field'
+    missingFieldError.statusCode = 400
     return res.status(400).send(missingFieldError)
   }
 
@@ -43,6 +44,7 @@ const createMeal = (req, res) => {
       if (!vendor) {
         const vendorNotFound = new Error()
         vendorNotFound.message = 'User not registered as vendor'
+        vendorNotFound.statusCode = 400
         return res.status(400).send(vendorNotFound)
       }
 
@@ -52,10 +54,12 @@ const createMeal = (req, res) => {
           if (!createdMeal) {
             const serverError = new Error()
             serverError.message = 'Something went wrong, meal could not be created'
+            serverError.statusCode = 500
             res.status(500).send(serverError)
           }
 
           return res.status(201).send({
+            statusCode: 201,
             message: 'Meal successfully created',
             data: [createdMeal]
           })
@@ -64,6 +68,7 @@ const createMeal = (req, res) => {
     .catch(() => {
       const serverError = new Error()
       serverError.message = 'User not registered as vendor'
+      serverError.statusCode = 500
       res.status(500).send(serverError)
     })
 }
@@ -94,6 +99,7 @@ const editMeal = (req, res) => {
   if (!mealId && !inputVals.length) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing required field'
+    missingFieldError.statusCode = 400
     return res.status(400).send(missingFieldError)
   }
 
@@ -112,6 +118,7 @@ const editMeal = (req, res) => {
       if (!vendor) {
         const vendorNotFound = new Error()
         vendorNotFound.message = 'User not registered as vendor'
+        vendorNotFound.statusCode = 400
         return res.status(400).send(vendorNotFound)
       }
 
@@ -124,9 +131,11 @@ const editMeal = (req, res) => {
       if (!updatedMeal) {
         const mealDoesNotExistError = new Error()
         mealDoesNotExistError.message = 'Meal does not exist'
+        mealDoesNotExistError.statusCode = 400
         res.status(400).send(mealDoesNotExistError)
       }
       return res.status(200).send({
+        statusCode: 200,
         message: 'Successfully updated Meal',
         data: updatedMeal.toObject()
       })
@@ -134,6 +143,7 @@ const editMeal = (req, res) => {
     .catch(() => {
       const serverError = new Error()
       serverError.message = 'Something went wrong, meal could not be updated'
+      serverError.statusCode = 500
       res.status(500).send(serverError)
     })
 }
@@ -152,6 +162,7 @@ const deleteMeal = (req, res) => {
   if (!mealId) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing required field'
+    missingFieldError.statusCode = 400
     return res.status(400).send(missingFieldError)
   }
 
@@ -162,6 +173,7 @@ const deleteMeal = (req, res) => {
       if (!vendor) {
         const vendorNotFound = new Error()
         vendorNotFound.message = 'User not registered as vendor'
+        vendorNotFound.statusCode = 400
         return res.status(400).send(vendorNotFound)
       }
 
@@ -174,9 +186,11 @@ const deleteMeal = (req, res) => {
       if (!deletedMeal) {
         const mealDoesNotExistError = new Error()
         mealDoesNotExistError.message = 'Meal does not exist'
+        mealDoesNotExistError.statusCode = 400
         res.status(400).send(mealDoesNotExistError)
       }
       return res.status(200).send({
+        statusCode: 200,
         message: 'Successfully deleted Meal',
         data: deletedMeal.toObject()
       })
@@ -184,6 +198,7 @@ const deleteMeal = (req, res) => {
     .catch(() => {
       const serverError = new Error()
       serverError.message = 'Something went wrong, meal could not be deleted'
+      serverError.statusCode = 500
       res.status(500).send(serverError)
     })
 }
@@ -201,6 +216,7 @@ const viewMeal = (req, res) => {
   if (!mealId) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing required field'
+    missingFieldError.statusCode = 400
     return res.status(400).send(missingFieldError)
   }
 
@@ -213,9 +229,11 @@ const viewMeal = (req, res) => {
       if (!meal) {
         const mealDoesNotExistError = new Error()
         mealDoesNotExistError.message = 'Meal does not exist'
+        mealDoesNotExistError.statusCode = 400
         return res.status(400).send(mealDoesNotExistError)
       }
       return res.status(200).send({
+        statusCode: 200,
         message: 'Successfully got a meal',
         data: meal
       })
@@ -250,12 +268,14 @@ const uploadMealImage = (req, res) => {
   if (!mealId) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing meal id'
+    missingFieldError.statusCode = 400
     return res.status(400).send(missingFieldError)
   }
 
   if (!inputVals.length) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing required field'
+    missingFieldError.statusCode = 400
     return res.status(400).send(missingFieldError)
   }
 
@@ -274,6 +294,7 @@ const uploadMealImage = (req, res) => {
       if (!vendorExists) {
         const vendorNotFound = new Error()
         vendorNotFound.message = 'User not registered as vendor'
+        vendorNotFound.statusCode = 400
         return res.status(400).send(vendorNotFound)
       }
 
@@ -296,6 +317,7 @@ const uploadMealImage = (req, res) => {
       if (!updatedMeal) {
         const mealDoesNotExistError = new Error()
         mealDoesNotExistError.message = 'Meal does not exist'
+        mealDoesNotExistError.statusCode = 400
         return res.status(400).send(mealDoesNotExistError)
       }
 
@@ -317,12 +339,14 @@ const uploadMealImage = (req, res) => {
       .populate('mealImages')
       .exec())
     .then(updatedMealImage => res.status(200).send({
+      statusCode: 200,
       message: 'Successfully updated Meal',
       data: updatedMealImage
     }))
     .catch(() => {
       const serverError = new Error()
       serverError.message = 'Something went wrong, meal could not be updated'
+      serverError.statusCode = 500
       return res.status(500).send(serverError)
     })
 }
@@ -350,12 +374,14 @@ const createMealRating = (req, res) => {
   if (!mealId) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing required field'
+    missingFieldError.statusCode = 400
     return res.status(400).send(missingFieldError)
   }
 
   if (!inputVals.length) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing required field'
+    missingFieldError.statusCode = 400
     return res.status(400).send(missingFieldError)
   }
 
@@ -375,6 +401,7 @@ const createMealRating = (req, res) => {
       if (mealRating) {
         const mealRatingExistError = new Error()
         mealRatingExistError.message = 'Meal rating already exists, cannot create'
+        mealRatingExistError.statusCode = 400
         return res.status(400).send(mealRatingExistError)
       }
       return req.Models.MealRating.create({
@@ -383,23 +410,21 @@ const createMealRating = (req, res) => {
         rating: modifiedInputValues.mealRating
       })
     })
-    .then((createdMealRating) => {
-      return req.Models.MealRating.findById({
-        _id: createdMealRating._id
-      })
-        .populate('user')
-        .populate('meal')
-        .exec()
+    .then(createdMealRating => req.Models.MealRating.findById({
+      _id: createdMealRating._id
     })
-    .then((mealRating) => {
-      return res.status(200).send({
-        message: 'Successfully rated meal',
-        data: mealRating
-      })
-    })
+      .populate('user')
+      .populate('meal')
+      .exec())
+    .then(mealRating => res.status(200).send({
+      statusCode: 200,
+      message: 'Successfully rated meal',
+      data: mealRating
+    }))
     .catch(() => {
       const serverError = new Error()
       serverError.message = 'Something went wrong, meal could not be fetched'
+      serverError.statusCode = 500
       res.status(500).send(serverError)
     })
 }
@@ -427,12 +452,14 @@ const changeMealRating = (req, res) => {
   if (!mealId) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing required field'
+    missingFieldError.statusCode = 400
     return res.status(400).send(missingFieldError)
   }
 
   if (!inputVals.length) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing required field'
+    missingFieldError.statusCode = 400
     return res.status(400).send(missingFieldError)
   }
 
@@ -452,6 +479,7 @@ const changeMealRating = (req, res) => {
       if (!mealRating) {
         const mealRatingDoesNotExistError = new Error()
         mealRatingDoesNotExistError.message = 'Meal rating does not exist yet'
+        mealRatingDoesNotExistError.statusCode = 400
         return res.status(400).send(mealRatingDoesNotExistError)
       }
       return req.Models.MealRating.findOneAndUpdate({
@@ -464,15 +492,15 @@ const changeMealRating = (req, res) => {
         .populate('meal')
         .exec()
     })
-    .then((mealRating) => {
-      return res.status(200).send({
-        message: 'Meal rating successfully changed',
-        data: mealRating
-      })
-    })
+    .then(mealRating => res.status(200).send({
+      statusCode: 400,
+      message: 'Meal rating successfully changed',
+      data: mealRating
+    }))
     .catch(() => {
       const serverError = new Error()
       serverError.message = 'Something went wrong, meal could not be fetched'
+      serverError.statusCode = 500
       res.status(500).send(serverError)
     })
 }

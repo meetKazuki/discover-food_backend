@@ -30,6 +30,7 @@ const checkoutWithBankAccount = (req, res) => {
   if (!cartId && !inputVals.length) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Field is missing'
+    missingFieldError.statusCode = 400
     return res.status(400).send(missingFieldError)
   }
 
@@ -43,6 +44,7 @@ const checkoutWithBankAccount = (req, res) => {
   if (!modifiedInputValues.shippingAddress) {
     const mustHaveShippingAddressError = new Error()
     mustHaveShippingAddressError.message = 'order must have a shipping address'
+    mustHaveShippingAddressError.statusCode = 400
     return res.status(400).send(mustHaveShippingAddressError)
   }
 
@@ -55,6 +57,7 @@ const checkoutWithBankAccount = (req, res) => {
     || !modifiedInputValues.bankAccountNumber) {
     const mustProvideCorrectBankDetailsError = new Error()
     mustProvideCorrectBankDetailsError.message = 'missing bank detail'
+    mustProvideCorrectBankDetailsError.statusCode = 400
     return res.status(400).send(mustProvideCorrectBankDetailsError)
   }
 
@@ -138,7 +141,11 @@ const checkoutWithBankAccount = (req, res) => {
         })
       }
     })
-    .then(orderCreated => res.status(201).send(orderCreated))
+    .then(orderCreated => res.status(201).send({
+      statusCode: 201,
+      message: 'order successfully created',
+      data: orderCreated
+    }))
     .catch(err => res.status(err.statusCode ? err.statusCode : 500)
       .send({
         message: err.message ? err.message : 'Something something went wrong, could not create order'
@@ -182,6 +189,7 @@ const checkoutWithCard = (req, res) => {
   if (!modifiedInputValues.shippingAddress) {
     const mustHaveShippingAddressError = new Error()
     mustHaveShippingAddressError.message = 'order must have a shipping address'
+    mustHaveShippingAddressError.statusCode = 400
     return res.status(400).send(mustHaveShippingAddressError)
   }
 
@@ -195,6 +203,7 @@ const checkoutWithCard = (req, res) => {
     || !modifiedInputValues.cardExpiryYear) {
     const mustProvideCorrectCardDetailsError = new Error()
     mustProvideCorrectCardDetailsError.message = 'missing card detail'
+    mustProvideCorrectCardDetailsError.statusCode = 400
     return res.status(400).send(mustProvideCorrectCardDetailsError)
   }
 
@@ -267,7 +276,11 @@ const checkoutWithCard = (req, res) => {
         })
       }
     })
-    .then(orderCreated => res.status(201).send(orderCreated))
+    .then(orderCreated => res.status(201).send({
+      message: 'order successfully created',
+      data: orderCreated,
+      statusCode: 201
+    }))
     .catch(err => res.status(err.statusCode ? err.statusCode : 500)
       .send({
         message: err.message ? err.message : 'Something something went wrong, could not create order'
@@ -310,6 +323,7 @@ const cancelOrder = (req, res) => {
       _id: order._id
     }, { new: true })
       .then(() => res.status(200).send({
+        statusCode: 200,
         message: 'Order successfull canceled'
       })))
     .catch(err => res.status(err.statusCode ? err.statusCode : 500)

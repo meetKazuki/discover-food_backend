@@ -13,6 +13,7 @@ const addressCoordinates = (req, res) => {
   if (fieldIsEmpty) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing required field'
+    missingFieldError.statusCode = 400
     return res.status(400).send(missingFieldError)
   }
   geocoderService(req.body.address, {
@@ -21,7 +22,11 @@ const addressCoordinates = (req, res) => {
     apiKey: config.geocodingApiKey,
     formatter: null
   })
-    .then(coord => res.status(200).send(coord))
+    .then(coord => res.status(200).send({
+      data: coord,
+      message: 'coordinates fetch successful',
+      statusCode: 400
+    }))
     .catch(err => res.status(400).send(err))
 }
 

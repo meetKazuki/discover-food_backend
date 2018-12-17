@@ -47,6 +47,7 @@ const createCart = (req, res) => {
       if (!userCart) {
         return Cart.createCart(meal, currentUser, req.body.orderType, req.body.foodSize)
           .then(createdCart => res.status(201).send({
+            statusCode: 201,
             message: 'Cart successfully created',
             data: [createdCart]
           }))
@@ -138,6 +139,7 @@ const deleteMealInCart = (req, res) => {
       return Promise.reject(mealNotInCart)
     })
     .then(deletedCartMeal => res.status(201).send({
+      statusCode: 201,
       message: 'Cart successfully deleted meal from cart',
       data: [deletedCartMeal]
     }))
@@ -224,6 +226,7 @@ const addMealToCart = (req, res) => {
       return Promise.reject(mealNotInCart)
     })
     .then(addedCartItem => res.status(201).send({
+      statusCode: 201,
       message: 'Cart successfully added',
       data: [addedCartItem]
     }))
@@ -257,6 +260,7 @@ const viewCartItems = (req, res) => {
       }
 
       return res.status(200).send({
+        statusCode: 200,
         message: 'User get cart details successful',
         data: [userCart]
       })

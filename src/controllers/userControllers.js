@@ -27,13 +27,15 @@ const register = (req, res) => {
   if (fieldIsEmpty) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing required field'
+    missingFieldError.statusCode = 400
     return res.status(400).send(missingFieldError)
   }
 
   const errorMsg = mongoModelValidation(req.body, req.Models.User)
   if (errorMsg) {
     return res.status(400).send({
-      message: errorMsg.message
+      message: errorMsg.message,
+      statusCode: 400
     })
   }
 
@@ -52,23 +54,28 @@ const register = (req, res) => {
 
         return user.save()
           .then((createdUser) => {
+            const createdUserObject = createdUser.toObject()
+            delete createdUserObject.password
             const token = new TokenManager()
             return res.status(201).send({
               message: 'User successfully registered',
-              data: [{
+              statusCode: 201,
+              data: {
                 token: token.create(
                   {
                     id: createdUser._id,
                     role: createdUser.role
                   }, config.tokenSecret
-                )
-              }]
+                ),
+                user: createdUserObject
+              }
             })
           })
           .catch(createUserErr => res.status(422).send(createUserErr))
       }
       const userAlreadyExistsError = new Error()
       userAlreadyExistsError.message = 'User already exists'
+      userAlreadyExistsError.statusCode = 400
       return res.status(400).send(userAlreadyExistsError)
     })
 }
@@ -92,6 +99,7 @@ const login = (req, res) => {
   if (fieldIsEmpty) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing required field'
+    missingFieldError.statusCode = 400
     return res.status(400).send(missingFieldError)
   }
 
@@ -108,26 +116,32 @@ const login = (req, res) => {
     .then((registeredUser) => {
       const token = new TokenManager()
       if (hash(req.body.password) === registeredUser.password) {
+        const registeredUserObject = registeredUser.toObject()
+        delete registeredUserObject.password
         return res.status(201).send({
           message: 'User successfully logged in',
-          data: [{
+          statusCode: 201,
+          data: {
             token: token.create(
               {
                 id: registeredUser._id,
                 role: registeredUser.role
               }, config.tokenSecret
-            )
-          }]
+            ),
+            user: registeredUserObject
+          }
         })
       }
 
       const passwordNotCorrectError = new Error()
       passwordNotCorrectError.message = 'Password not correct'
+      passwordNotCorrectError.statusCode = 400
       return res.status(400).send(passwordNotCorrectError)
     })
     .catch(() => {
       const userNotRegisteredError = new Error()
       userNotRegisteredError.message = 'User does not exist'
+      userNotRegisteredError.statusCode = 401
       return res.status(401).send(userNotRegisteredError)
     })
 }
@@ -150,6 +164,7 @@ const forgotPassword = (req, res) => {
   if (fieldIsEmpty) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing required field'
+    missingFieldError.statusCode = 400
     return res.status(400).send(missingFieldError)
   }
 
@@ -201,11 +216,13 @@ const forgotPassword = (req, res) => {
         })
         .then(message => res.status(201).send({
           message: 'Email to request password change successfully sent',
-          data: message
+          data: message,
+          statusCode: 201
         }))
         .catch(() => {
           const userUpdateError = new Error()
           userUpdateError.message = 'Could not send email for password change request'
+          userUpdateError.statusCode = 500
           return res.status(500).send(userUpdateError)
         })
     })
@@ -236,19 +253,22 @@ const resetPassword = (req, res) => {
   if (fieldIsEmpty) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing required field'
+    missingFieldError.statusCode = 400
     return res.status(400).send(missingFieldError)
   }
 
   if (req.body.password !== req.body.confirmPassword) {
     const confirmPasswordError = new Error()
     confirmPasswordError.message = 'Password does not match'
+    confirmPasswordError.statusCode = 400
     return res.status(400).send(confirmPasswordError)
   }
 
   const errorMsg = mongoModelValidation(req.body, req.Models.User)
   if (errorMsg) {
     return res.status(400).send({
-      message: errorMsg.message
+      message: errorMsg.message,
+      statusCode: 400
     })
   }
 
@@ -288,13 +308,15 @@ const resetPassword = (req, res) => {
         })
         .then(message => res.status(201).send({
           message: 'Email to request password change successfully sent',
-          data: message
+          data: message,
+          statusCode: 201
         }))
         .catch(err => res.status(500).send(err))
     })
     .catch(() => {
       const resetTokenError = new Error()
       resetTokenError.message = 'Password reset token is invalid or has expired.'
+      resetTokenError.statusCode = 400
       return res.status(400).send(resetTokenError)
     })
 }
@@ -310,6 +332,7 @@ const viewProfile = (req, res) => {
   const { currentUser } = req
   res.status(200).send({
     message: 'current user successfully found',
+    statusCode: 200,
     data: [
       currentUser.toObject()
     ]
@@ -342,6 +365,7 @@ const editProfile = (req, res) => {
   if (!inputVals.length) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing required field'
+    missingFieldError.statusCode = 400
     return res.status(400).send(missingFieldError)
   }
 
@@ -385,6 +409,7 @@ const editProfile = (req, res) => {
         .exec()
     })
     .then(userUpdate => res.status(200).send({
+      statusCode: 200,
       message: 'Successfully updated user',
       data: userUpdate.toObject()
     }))
@@ -410,12 +435,14 @@ const addVendorToFavorites = (req, res) => {
   if (!selectedVendorId) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing required field'
+    missingFieldError.statusCode = 400
     return res.status(400).send(missingFieldError)
   }
 
   if (currentUser._id === selectedVendorId) {
     const addSelfAsFavError = new Error()
     addSelfAsFavError.message = 'Cannot not add yourself as a favorite'
+    addSelfAsFavError.statusCode = 400
     return res.status(400).send(addSelfAsFavError)
   }
   req.Models.Vendor.findOne({ user: selectedVendorId })
@@ -436,12 +463,14 @@ const addVendorToFavorites = (req, res) => {
                     .filter(item => item.toString() !== vendorExists._id.toString())
                 }, { new: true })
                   .then(updatedUser => res.status(200).send({
+                    statusCode: 200,
                     message: 'favorite vendor successfully removed',
                     data: [updatedUser]
                   }))
                   .catch(() => {
                     const couldNotUpdataVendorError = new Error()
                     couldNotUpdataVendorError.message = 'Something went wrong, could not update favorite vendor'
+                    couldNotUpdataVendorError.statusCode = 500
                     res.status(500).send(couldNotUpdataVendorError)
                   })
               }
@@ -451,28 +480,33 @@ const addVendorToFavorites = (req, res) => {
                 favoriteVendors: registeredUser.favoriteVendors.concat([vendorExists._id])
               }, { new: true })
                 .then(updatedUser => res.status(200).send({
+                  statusCode: 200,
                   message: 'favorite vendor successfully added',
                   data: [updatedUser]
                 }))
                 .catch(() => {
                   const couldNotUpdataVendorError = new Error()
                   couldNotUpdataVendorError.message = 'Something went wrong, could not update favorite vendor'
+                  couldNotUpdataVendorError.statusCode = 500
                   res.status(500).send(couldNotUpdataVendorError)
                 })
             }
 
             const userDoesNotExistError = new Error()
             userDoesNotExistError.message = 'User does not exist'
+            userDoesNotExistError.statusCode = 400
             res.status(400).send(userDoesNotExistError)
           })
       }
       const vendorDoesNotExist = new Error()
       vendorDoesNotExist.message = 'Vendor does not exist'
+      vendorDoesNotExist.statusCode = 400
       return res.status(400).send(vendorDoesNotExist)
     })
     .catch(() => {
       const serverError = new Error()
       serverError.message = 'Something went wrong finding this vendor'
+      serverError.statusCode = 500
       return res.status(500).send(serverError)
     })
 }
@@ -483,10 +517,14 @@ const viewFavoriteVendor = (req, res) => {
     .populate('favoriteVendors')
     .exec()
     .then(vendor => res.status(200).send({
+      statusCode: 200,
       message: 'get favorite vendors successfully',
       data: vendor.favoriteVendors
     }))
-    .catch(() => res.status(400).send({ message: 'could not get user favorite vendor' }))
+    .catch(() => res.status(400).send({
+      message: 'could not get user favorite vendor',
+      statusCode: 400
+    }))
 }
 
 module.exports = {
