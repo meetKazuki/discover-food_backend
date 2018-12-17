@@ -213,7 +213,7 @@ const viewMeal = (req, res) => {
       if (!meal) {
         const mealDoesNotExistError = new Error()
         mealDoesNotExistError.message = 'Meal does not exist'
-        res.status(400).send(mealDoesNotExistError)
+        return res.status(400).send(mealDoesNotExistError)
       }
       return res.status(200).send({
         message: 'Successfully got a meal',
@@ -223,7 +223,7 @@ const viewMeal = (req, res) => {
     .catch(() => {
       const serverError = new Error()
       serverError.message = 'Something went wrong, meal could not be fetched'
-      res.status(500).send(serverError)
+      return res.status(500).send(serverError)
     })
 }
 
@@ -327,11 +327,163 @@ const uploadMealImage = (req, res) => {
     })
 }
 
+/**
+ * A user should be able to create a rating for a meal
+ * @param {Object} req
+ * @param {Object} res
+ *
+ * @return {Object} response
+ */
+const createMealRating = (req, res) => {
+  const { mealId } = req.params
+  const { currentUser } = req
+
+  const fieldInputs = [
+    'mealRating',
+  ]
+  const inputVals = fieldInputs.filter(fieldInput => req.body[fieldInput])
+    .map(value => ({
+      [value]: req.body[value]
+    }))
+
+
+  if (!mealId) {
+    const missingFieldError = new Error()
+    missingFieldError.message = 'Missing required field'
+    return res.status(400).send(missingFieldError)
+  }
+
+  if (!inputVals.length) {
+    const missingFieldError = new Error()
+    missingFieldError.message = 'Missing required field'
+    return res.status(400).send(missingFieldError)
+  }
+
+  const combineInputsInObjReducer = (inputsObject, currentValue) => {
+    const [key] = Object.keys(currentValue)
+    inputsObject[key] = currentValue[key]
+    return inputsObject
+  }
+
+  const modifiedInputValues = inputVals.reduce(combineInputsInObjReducer, {})
+
+  req.Models.MealRating.findOne({
+    meal: mealId,
+    user: currentUser._id
+  })
+    .then((mealRating) => {
+      if (mealRating) {
+        const mealRatingExistError = new Error()
+        mealRatingExistError.message = 'Meal rating already exists, cannot create'
+        return res.status(400).send(mealRatingExistError)
+      }
+      return req.Models.MealRating.create({
+        user: currentUser._id,
+        meal: mealId,
+        rating: modifiedInputValues.mealRating
+      })
+    })
+    .then((createdMealRating) => {
+      return req.Models.MealRating.findById({
+        _id: createdMealRating._id
+      })
+        .populate('user')
+        .populate('meal')
+        .exec()
+    })
+    .then((mealRating) => {
+      return res.status(200).send({
+        message: 'Successfully rated meal',
+        data: mealRating
+      })
+    })
+    .catch(() => {
+      const serverError = new Error()
+      serverError.message = 'Something went wrong, meal could not be fetched'
+      res.status(500).send(serverError)
+    })
+}
+
+/**
+ * A user should be able to change meal rating
+ * @param {Object} req
+ * @param {Object} res
+ *
+ * @return {Object} response
+ */
+const changeMealRating = (req, res) => {
+  const { mealId } = req.params
+  const { currentUser } = req
+
+  const fieldInputs = [
+    'mealRating',
+  ]
+  const inputVals = fieldInputs.filter(fieldInput => req.body[fieldInput])
+    .map(value => ({
+      [value]: req.body[value]
+    }))
+
+
+  if (!mealId) {
+    const missingFieldError = new Error()
+    missingFieldError.message = 'Missing required field'
+    return res.status(400).send(missingFieldError)
+  }
+
+  if (!inputVals.length) {
+    const missingFieldError = new Error()
+    missingFieldError.message = 'Missing required field'
+    return res.status(400).send(missingFieldError)
+  }
+
+  const combineInputsInObjReducer = (inputsObject, currentValue) => {
+    const [key] = Object.keys(currentValue)
+    inputsObject[key] = currentValue[key]
+    return inputsObject
+  }
+
+  const modifiedInputValues = inputVals.reduce(combineInputsInObjReducer, {})
+
+  req.Models.MealRating.findOne({
+    meal: mealId,
+    user: currentUser._id
+  })
+    .then((mealRating) => {
+      if (!mealRating) {
+        const mealRatingDoesNotExistError = new Error()
+        mealRatingDoesNotExistError.message = 'Meal rating does not exist yet'
+        return res.status(400).send(mealRatingDoesNotExistError)
+      }
+      return req.Models.MealRating.findOneAndUpdate({
+        user: currentUser._id,
+        meal: mealId
+      }, {
+        rating: modifiedInputValues.mealRating
+      }, { new: true })
+        .populate('user')
+        .populate('meal')
+        .exec()
+    })
+    .then((mealRating) => {
+      return res.status(200).send({
+        message: 'Meal rating successfully changed',
+        data: mealRating
+      })
+    })
+    .catch(() => {
+      const serverError = new Error()
+      serverError.message = 'Something went wrong, meal could not be fetched'
+      res.status(500).send(serverError)
+    })
+}
+
 
 module.exports = {
   createMeal,
   editMeal,
   deleteMeal,
   viewMeal,
-  uploadMealImage
+  uploadMealImage,
+  createMealRating,
+  changeMealRating
 }
