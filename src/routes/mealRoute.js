@@ -12,5 +12,6 @@ router.get('/meal/view/:mealId', authorize('User'), mealController.viewMeal)
 router.put('/meal/upload/:mealId', authorize('User'), mealController.uploadMealImage)
 router.post('/meal/rating/:mealId', authorize('User'), mealController.createMealRating)
 router.patch('/meal/rating/edit/:mealId', authorize('User'), mealController.changeMealRating)
+router.post('/meal/search/', authorize('User'), mealController.searchForMeals)
 
 module.exports = router

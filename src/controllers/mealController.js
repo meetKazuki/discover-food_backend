@@ -505,6 +505,57 @@ const changeMealRating = (req, res) => {
     })
 }
 
+/**
+ * A user should be search for a meal
+ * search by text
+ * search by coordinates
+ * combine each result
+ * @param {Object} req
+ * @param {Object} res
+ *
+ * @return {Object} response
+ */
+const searchForMeals = (req, res) => {
+  const fieldInputs = [
+    'searchText',
+    'location'
+  ]
+  const inputVals = fieldInputs.filter(fieldInput => req.body[fieldInput])
+    .map(value => ({
+      [value]: req.body[value]
+    }))
+
+  if (!inputVals.length) {
+    const missingFieldError = new Error()
+    missingFieldError.message = 'Missing required field'
+    missingFieldError.statusCode = 400
+    return res.status(400).send(missingFieldError)
+  }
+
+  const combineInputsInObjReducer = (inputsObject, currentValue) => {
+    const [key] = Object.keys(currentValue)
+    inputsObject[key] = currentValue[key]
+    return inputsObject
+  }
+
+  const modifiedInputValues = inputVals.reduce(combineInputsInObjReducer, {})
+
+  req.Models.Meal.find({
+    $text: {
+      $search: modifiedInputValues.searchText
+    }
+    // location: {
+    //   $near: modifiedInputValues.location ? modifiedInputValues : [],
+    //   maxDist: 1000
+    // }
+  })
+    // .populate('vendor')
+    .populate({ path: 'vendor', populate: { path: 'user' } })
+    .exec()
+    .then((searchResult) => {
+      res.status(200).send(searchResult)
+    })
+}
 
 module.exports = {
   createMeal,
@@ -513,5 +564,6 @@ module.exports = {
   viewMeal,
   uploadMealImage,
   createMealRating,
-  changeMealRating
+  changeMealRating,
+  searchForMeals
 }
