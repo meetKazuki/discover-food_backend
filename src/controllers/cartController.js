@@ -167,7 +167,6 @@ const addMealToCart = (req, res) => {
 
   let meal
   let cart
-  // Verify that user is registered
 
   // Verify that meal exists
   return req.Models.Meal.findOne({
@@ -204,7 +203,6 @@ const addMealToCart = (req, res) => {
         .exec()
     })
     .then((cartToUpdate) => {
-      // I am in cart
       const mealIsInCart = cartToUpdate.cartItems.indexOf(meal._id)
       const totalPrice = cart.totalPrice + meal.unitPriceAmount
       if (mealIsInCart < 0) {
