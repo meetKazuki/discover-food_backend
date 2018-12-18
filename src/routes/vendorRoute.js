@@ -8,6 +8,6 @@ const router = express.Router()
 router.post('/vendor/register', vendorController.register)
 router.post('/vendor/login', vendorController.login)
 router.get('/vendor/view-profile', authorize('User'), vendorController.viewProfile)
-// router.patch('/user/edit-profile', authorize('User'), userController.editProfile)
+router.patch('/vendor/edit-profile', authorize('User'), vendorController.editProfile)
 
 module.exports = router

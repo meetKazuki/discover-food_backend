@@ -11,7 +11,8 @@ const Point = new Schema({
     enum: ['Point']
   },
   coordinates: {
-    type: [Number]
+    type: [Number],
+    index: '2dsphere'
   }
 })
 
