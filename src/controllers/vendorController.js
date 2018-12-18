@@ -25,13 +25,15 @@ const register = (req, res) => {
   if (fieldIsEmpty) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing required field'
+    missingFieldError.statusCode = 400
     return res.status(400).send(missingFieldError)
   }
 
   const errorMsg = mongoModelValidation(req.body, req.Models.User)
   if (errorMsg) {
     return res.status(400).send({
-      message: errorMsg.message
+      message: errorMsg.message,
+      statusCode: 400
     })
   }
 
@@ -59,14 +61,16 @@ const register = (req, res) => {
             const token = new TokenManager()
             return res.status(201).send({
               message: 'Vendor successfully registered',
-              data: [{
+              statusCode: 201,
+              data: {
                 token: token.create(
                   {
                     id: createdVendor._id,
                     role: createdVendor.role
                   }, config.tokenSecret
-                )
-              }]
+                ),
+                vendor: createdVendor
+              }
             })
           })
       }
@@ -85,24 +89,28 @@ const register = (req, res) => {
                 const token = new TokenManager()
                 return res.status(201).send({
                   message: 'Vendor successfully registered',
-                  data: [{
+                  statusCode: 201,
+                  data: {
                     token: token.create(
                       {
                         id: createdVendor._id,
                         role: createdVendor.role
                       }, config.tokenSecret
-                    )
-                  }]
+                    ),
+                    vendor: createdVendor
+                  }
                 })
               })
               .catch(() => {
                 const couldNotRegisterVendor = new Error()
                 couldNotRegisterVendor.message = 'Something went wrong, could not create vendor'
+                couldNotRegisterVendor.statusCode = 500
                 return res.status(500).send(couldNotRegisterVendor)
               })
           }
           const vendorAlreadyExists = new Error()
           vendorAlreadyExists.message = 'Vendor already exists'
+          vendorAlreadyExists.statusCode = 400
           return res.status(400).send(vendorAlreadyExists)
         })
     })
@@ -128,13 +136,15 @@ const login = (req, res) => {
   if (fieldIsEmpty) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing required field'
+    missingFieldError.statusCode = 400
     return res.status(400).send(missingFieldError)
   }
 
   const errorMsg = mongoModelValidation(req.body, req.Models.User)
   if (errorMsg) {
     return res.status(400).send({
-      message: errorMsg.message
+      message: errorMsg.message,
+      statusCode: 400
     })
   }
 
@@ -151,30 +161,40 @@ const login = (req, res) => {
             if (vendorExists) {
               return res.status(201).send({
                 message: 'User successfully logged in as a vendor',
-                data: [{
+                statusCode: 201,
+                data: {
                   token: token.create(
                     {
                       id: registeredUser._id,
                       role: registeredUser.role
                     }, config.tokenSecret
-                  )
-                }]
+                  ),
+                  vendor: vendorExists
+                }
               })
             }
             const vendorLoginError = new Error()
             vendorLoginError.message = 'User does not exist as a vendor'
+            vendorLoginError.statusCode = 400
             return res.status(400).send(vendorLoginError)
           })
-          .catch(() => res.status(500).send(new Error('Something went wrong, could not login vendor')))
+          .catch(() => {
+            const vendorLoginError = new Error()
+            vendorLoginError.message = 'Something went wrong, could not login vendor'
+            vendorLoginError.statusCode = 500
+            res.status(500).send(vendorLoginError)
+          })
       }
 
       const passwordNotCorrectError = new Error()
       passwordNotCorrectError.message = 'Password not correct'
+      passwordNotCorrectError.statusCode = 400
       return res.status(400).send(passwordNotCorrectError)
     })
     .catch(() => {
       const userNotRegisteredError = new Error()
       userNotRegisteredError.message = 'User does not exist'
+      userNotRegisteredError.statusCode = 400
       return res.status(400).send(userNotRegisteredError)
     })
 }
@@ -187,9 +207,9 @@ const login = (req, res) => {
  * @return {Object} res response object
  */
 const viewProfile = (req, res) => {
-  const { id } = req.currentUser
+  const { currentUser } = req
   req.Models.Vendor.findOne({
-    user: id
+    user: currentUser._id
   })
     .populate('user')
     .exec()
@@ -197,17 +217,20 @@ const viewProfile = (req, res) => {
       if (!vendor) {
         const vendorNotFound = new Error()
         vendorNotFound.message = 'User not registered as vendor'
+        vendorNotFound.statusCode = 400
         return res.status(400).send(vendorNotFound)
       }
 
       return res.status(200).send({
         message: 'get vendor successful',
+        statusCode: 200,
         data: vendor
       })
     })
     .catch(() => {
       const serverError = new Error()
       serverError.message = 'User not registered as vendor'
+      serverError.statusCode = 500
       res.status(500).send(serverError)
     })
 }
@@ -220,7 +243,7 @@ const viewProfile = (req, res) => {
  * @return {Object} res response object
  */
 const editProfile = (req, res) => {
-  const { id } = req.currentUser
+  const { currentUser } = req
   const fieldInputs = ['firstName', 'lastName', 'imageUrl', 'phone', 'location', 'address']
   const inputVals = fieldInputs.filter(fieldInput => req.body[fieldInput])
     .map(value => ({
@@ -230,6 +253,7 @@ const editProfile = (req, res) => {
   if (!inputVals.length) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing required field'
+    missingFieldError.statusCode = 400
     return res.status(400).send(missingFieldError)
   }
 
@@ -242,9 +266,10 @@ const editProfile = (req, res) => {
   }
   const modifiedInputValues = inputVals.reduce(combineInputsInObjReducer, {})
   req.Models.User.findOneAndUpdate({
-    _id: id
+    _id: currentUser._id
   }, modifiedInputValues, { new: true })
     .then(updatedUser => res.status(200).send({
+      statusCode: 200,
       message: 'Successfully updated user',
       data: updatedUser.toObject()
     }))

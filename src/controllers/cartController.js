@@ -10,7 +10,7 @@ const {
  * @return {Object} res response object
  */
 const createCart = (req, res) => {
-  const { id } = req.currentUser
+  const { currentUser } = req
   const { mealId } = req.params
 
   const fieldIsEmpty = hasEmptyField([
@@ -23,26 +23,13 @@ const createCart = (req, res) => {
     return Promise.reject(missingFieldError)
   }
 
-  let user
   let meal
-  // Verify that user is registered
-  req.Models.User.findOne({
-    _id: id
+  // Verify that meal exists
+  return req.Models.Meal.findOne({
+    _id: mealId
   })
-    .then((userExists) => {
-      if (!userExists) {
-        const userNotFound = new Error()
-        userNotFound.message = 'User not registered'
-        return Promise.reject(userNotFound)
-      }
-      user = userExists
-      // Verify that meal exists
-      return req.Models.Meal.findOne({
-        _id: mealId
-      })
-        .populate('vendor')
-        .exec()
-    })
+    .populate('vendor')
+    .exec()
     .then((mealExists) => {
       if (!mealExists) {
         const mealDoesNotExistError = new Error()
@@ -52,14 +39,15 @@ const createCart = (req, res) => {
       }
       meal = mealExists
       return req.Models.Cart.findOne({
-        user: user._id
+        user: currentUser._id
       })
     })
     .then((userCart) => {
       const Cart = new req.Models.Cart()
       if (!userCart) {
-        return Cart.createCart(meal, user, req.body.orderType, req.body.foodSize)
+        return Cart.createCart(meal, currentUser, req.body.orderType, req.body.foodSize)
           .then(createdCart => res.status(201).send({
+            statusCode: 201,
             message: 'Cart successfully created',
             data: [createdCart]
           }))
@@ -82,7 +70,7 @@ const createCart = (req, res) => {
  * @return {Object} res response object
  */
 const deleteMealInCart = (req, res) => {
-  const { id } = req.currentUser
+  const { currentUser } = req
   const { mealId } = req.params
 
   if (!mealId) {
@@ -92,26 +80,15 @@ const deleteMealInCart = (req, res) => {
     return Promise.reject(missingFieldError)
   }
 
-  let user
   let meal
   // Verify that user is registered
-  req.Models.User.findOne({
-    _id: id
+
+  // Verify that meal exists
+  req.Models.Meal.findOne({
+    _id: mealId
   })
-    .then((userExists) => {
-      if (!userExists) {
-        const userNotFound = new Error()
-        userNotFound.message = 'User not registered'
-        return Promise.reject(userNotFound)
-      }
-      user = userExists
-      // Verify that meal exists
-      return req.Models.Meal.findOne({
-        _id: mealId
-      })
-        .populate('vendor')
-        .exec()
-    })
+    .populate('vendor')
+    .exec()
     .then((mealExists) => {
       if (!mealExists) {
         const mealDoesNotExistError = new Error()
@@ -121,7 +98,7 @@ const deleteMealInCart = (req, res) => {
       }
       meal = mealExists
       return req.Models.Cart.findOne({
-        user: user._id
+        user: currentUser._id
       })
     })
     .then((userCart) => {
@@ -162,6 +139,7 @@ const deleteMealInCart = (req, res) => {
       return Promise.reject(mealNotInCart)
     })
     .then(deletedCartMeal => res.status(201).send({
+      statusCode: 201,
       message: 'Cart successfully deleted meal from cart',
       data: [deletedCartMeal]
     }))
@@ -177,7 +155,7 @@ const deleteMealInCart = (req, res) => {
  * @return {Object} res response object
  */
 const addMealToCart = (req, res) => {
-  const { id } = req.currentUser
+  const { currentUser } = req
   const { mealId } = req.params
 
   if (!mealId) {
@@ -187,27 +165,15 @@ const addMealToCart = (req, res) => {
     return Promise.reject(missingFieldError)
   }
 
-  let user
   let meal
-  // Verify that user is registered
-  req.Models.User.findOne({
-    _id: id
+  let cart
+
+  // Verify that meal exists
+  return req.Models.Meal.findOne({
+    _id: mealId
   })
-    .then((userExists) => {
-      if (!userExists) {
-        const userNotFound = new Error()
-        userNotFound.message = 'User not registered'
-        userNotFound.statusCode = 400
-        return Promise.reject(userNotFound)
-      }
-      user = userExists
-      // Verify that meal exists
-      return req.Models.Meal.findOne({
-        _id: mealId
-      })
-        .populate('vendor')
-        .exec()
-    })
+    .populate('vendor')
+    .exec()
     .then((mealExists) => {
       if (!mealExists) {
         const mealDoesNotExistError = new Error()
@@ -217,7 +183,7 @@ const addMealToCart = (req, res) => {
       }
       meal = mealExists
       return req.Models.Cart.findOne({
-        user: user._id
+        user: currentUser._id
       })
     })
     .then((userCart) => {
@@ -227,7 +193,7 @@ const addMealToCart = (req, res) => {
         cartDoesNotExistError.statusCode = 400
         return Promise.reject(cartDoesNotExistError)
       }
-
+      cart = userCart
       return req.Models.Cart.findOne({
         _id: userCart._id
       }, {
@@ -238,12 +204,14 @@ const addMealToCart = (req, res) => {
     })
     .then((cartToUpdate) => {
       const mealIsInCart = cartToUpdate.cartItems.indexOf(meal._id)
+      const totalPrice = cart.totalPrice + meal.unitPriceAmount
       if (mealIsInCart < 0) {
         return req.Models.Cart.findOneAndUpdate({
           _id: cartToUpdate._id
         },
         {
-          cartItems: cartToUpdate.cartItems.concat([meal._id])
+          cartItems: cartToUpdate.cartItems.concat([meal._id]),
+          totalPrice
         },
         {
           new: true
@@ -256,6 +224,7 @@ const addMealToCart = (req, res) => {
       return Promise.reject(mealNotInCart)
     })
     .then(addedCartItem => res.status(201).send({
+      statusCode: 201,
       message: 'Cart successfully added',
       data: [addedCartItem]
     }))
@@ -271,26 +240,15 @@ const addMealToCart = (req, res) => {
  * @return {Object} res response object
  */
 const viewCartItems = (req, res) => {
-  const { id } = req.currentUser
+  const { currentUser } = req
 
-  // Verify that user is registered
-  req.Models.User.findOne({
-    _id: id
+  // Verify that meal exists
+  return req.Models.Cart.findOne({
+    user: currentUser._id
   })
-    .then((userExists) => {
-      if (!userExists) {
-        const userNotFound = new Error()
-        userNotFound.message = 'User not registered'
-        return Promise.reject(userNotFound)
-      }
-      // Verify that meal exists
-      return req.Models.Cart.findOne({
-        user: userExists._id
-      })
-        .populate('user')
-        .populate('cartItems')
-        .exec()
-    })
+    .populate('user')
+    .populate('cartItems')
+    .exec()
     .then((userCart) => {
       if (!userCart) {
         const cartDoesNotExistError = new Error()
@@ -300,6 +258,7 @@ const viewCartItems = (req, res) => {
       }
 
       return res.status(200).send({
+        statusCode: 200,
         message: 'User get cart details successful',
         data: [userCart]
       })

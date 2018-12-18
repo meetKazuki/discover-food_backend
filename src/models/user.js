@@ -67,13 +67,7 @@ const User = new Schema({
     type: String
   },
   location: {
-    type: {
-      type: String,
-      enum: ['Point']
-    },
-    coordinates: {
-      type: [Number]
-    }
+    type: Schema.Types.ObjectId, ref: 'Point'
   },
   favoriteVendors: [{
     type: Schema.Types.ObjectId, ref: 'Vendor'

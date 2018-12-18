@@ -29,7 +29,7 @@ const Cart = Schema({
 Cart.method('createCart', function (meal, user, orderType, foodSize) {
   this.cartItems.push(meal._id)
   this.totalQuantity = this.cartItems.length
-  this.totalPrice = this.totalQuantity * meal.unitPriceAmount ? meal.unitPriceAmount : 0
+  this.totalPrice = meal.unitPriceAmount
   this.vendor = meal.vendor._id
   this.orderType = orderType
   this.foodSize = foodSize

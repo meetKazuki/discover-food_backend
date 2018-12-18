@@ -22,8 +22,26 @@ const authorize = (roles = []) => {
         if (roles.length && !roles.includes(decodedToken.data.role)) {
           return res.status(401).json({ message: 'Unauthorized' })
         }
-        req.currentUser = decodedToken.data
-        next()
+
+        const { id } = decodedToken.data
+        // Verify that user is registered
+        req.Models.User.findOne({
+          _id: id
+        })
+          .then((userExists) => {
+            if (!userExists) {
+              const userNotFound = new Error()
+              userNotFound.message = 'User not registered'
+              userNotFound.statusCode = 400
+              return Promise.reject(userNotFound)
+            }
+
+            req.currentUser = userExists
+            next()
+          })
+          .catch((err) => {
+            res.status(err.statusCode).send(err.message)
+          })
       })
       .catch(err => res.status(403).send({ message: err.message }))
   }

@@ -20,7 +20,7 @@ exports.isEmail = str => validator.isEmail(str)
  * @return {Boolean} true if within range else false
  */
 exports.isLength = str => validator.isLength(str, {
-  min: 4,
+  min: 1,
   max: 255
 })
 
