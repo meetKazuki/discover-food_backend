@@ -4,7 +4,7 @@ const { Schema } = mongoose
 
 const Meal = new Schema({
   vendor: {
-    type: Schema.Types.ObjectId, ref: 'Vendor'
+    type: Schema.Types.ObjectId, ref: 'User'
   },
   name: {
     type: String

@@ -37,40 +37,27 @@ const createMeal = (req, res) => {
   }
   const modifiedInputValues = inputVals.reduce(combineInputsInObjReducer, {})
 
-  req.Models.Vendor.findOne({
-    user: currentUser._id
-  })
-    .then((vendor) => {
-      if (!vendor) {
-        const vendorNotFound = new Error()
-        vendorNotFound.message = 'User not registered as vendor'
-        vendorNotFound.statusCode = 400
-        return res.status(400).send(vendorNotFound)
+  modifiedInputValues.vendor = currentUser._id
+  return req.Models.Meal.create(modifiedInputValues)
+    .then((createdMeal) => {
+      if (!createdMeal) {
+        const serverError = new Error()
+        serverError.message = 'Something went wrong, meal could not be created'
+        serverError.statusCode = 500
+        return Promise.reject(serverError)
       }
 
-      modifiedInputValues.vendor = vendor._id
-      return req.Models.Meal.create(modifiedInputValues)
-        .then((createdMeal) => {
-          if (!createdMeal) {
-            const serverError = new Error()
-            serverError.message = 'Something went wrong, meal could not be created'
-            serverError.statusCode = 500
-            res.status(500).send(serverError)
-          }
-
-          return res.status(201).send({
-            statusCode: 201,
-            message: 'Meal successfully created',
-            data: [createdMeal]
-          })
-        })
+      return res.status(201).send({
+        statusCode: 201,
+        message: 'Meal successfully created',
+        data: [createdMeal]
+      })
     })
-    .catch(() => {
-      const serverError = new Error()
-      serverError.message = 'User not registered as vendor'
-      serverError.statusCode = 500
-      res.status(500).send(serverError)
-    })
+    .catch(err => res.status(err.statusCode ? err.statusCode : 500)
+      .send({
+        message: err.message ? err.message : 'Something something went wrong',
+        statusCode: err.statusCode ? err.statusCode : 500
+      }))
 }
 
 /**
@@ -111,22 +98,10 @@ const editMeal = (req, res) => {
 
   const modifiedInputValues = inputVals.reduce(combineInputsInObjReducer, {})
 
-  req.Models.Vendor.findOne({
-    user: currentUser._id
-  })
-    .then((vendor) => {
-      if (!vendor) {
-        const vendorNotFound = new Error()
-        vendorNotFound.message = 'User not registered as vendor'
-        vendorNotFound.statusCode = 400
-        return res.status(400).send(vendorNotFound)
-      }
-
-      return req.Models.Meal.findOneAndUpdate({
-        _id: mealId,
-        vendor: vendor._id
-      }, modifiedInputValues, { new: true })
-    })
+  return req.Models.Meal.findOneAndUpdate({
+    _id: mealId,
+    vendor: currentUser._id
+  }, modifiedInputValues, { new: true })
     .then((updatedMeal) => {
       if (!updatedMeal) {
         const mealDoesNotExistError = new Error()
@@ -166,22 +141,10 @@ const deleteMeal = (req, res) => {
     return res.status(400).send(missingFieldError)
   }
 
-  req.Models.Vendor.findOne({
-    user: currentUser._id
+  return req.Models.Meal.findOneAndDelete({
+    _id: mealId,
+    vendor: currentUser._id
   })
-    .then((vendor) => {
-      if (!vendor) {
-        const vendorNotFound = new Error()
-        vendorNotFound.message = 'User not registered as vendor'
-        vendorNotFound.statusCode = 400
-        return res.status(400).send(vendorNotFound)
-      }
-
-      return req.Models.Meal.findOneAndDelete({
-        _id: mealId,
-        vendor: vendor._id
-      })
-    })
     .then((deletedMeal) => {
       if (!deletedMeal) {
         const mealDoesNotExistError = new Error()

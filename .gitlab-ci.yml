@@ -6,47 +6,23 @@ image: node:latest
 # Pick zero or more services to be used on all builds.
 # Only needed when using a docker container to run your tests in.
 # Check out: http://docs.gitlab.com/ce/ci/docker/using_docker_images.html#what-is-a-service
+services:
+  - mysql:latest
+  - redis:latest
+  - postgres:latest
 
 # This folder is cached between builds
 # http://docs.gitlab.com/ce/ci/yaml/README.html#cache
-test_server:
-  before_script:
-    - apt-get update
-    - apt-get --yes --force-yes install rsync
+cache:
+  paths:
+  - node_modules/
 
-  only:
-    refs:
-      - develop
-    
+test_async:
   script:
-   - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
-   # Run ssh-agent (inside the build environment)
-   - eval $(ssh-agent -s)
-   # Add the SSH key stored in SSH_PRIVATE_KEY variable to the agent store
-   - ssh-add <(echo "$SSH_PRIVATE_KEY")
-   - mkdir -p ~/.ssh
-   - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
-   # sync the files and restart the app
-   - rsync -avrc --delete --exclude=.env "$PWD/" root@$SERVER_IP:/root/$PROJECT_NAME/
-   - ssh root@$SERVER_IP "cd /root/$PROJECT_NAME/; npm install; pm2 restart $PROJECT_NAME"
+   - npm install
+   - node ./specs/start.js ./specs/async.spec.js
 
-master_server:
-  before_script:
-    - apt-get update
-    - apt-get --yes --force-yes install rsync
-
-  only:
-    refs:
-      - master
-    
+test_db:
   script:
-   - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
-   # Run ssh-agent (inside the build environment)
-   - eval $(ssh-agent -s)
-   # Add the SSH key stored in SSH_PRIVATE_KEY variable to the agent store
-   - ssh-add <(echo "$SSH_PRIVATE_KEY")
-   - mkdir -p ~/.ssh
-   - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
-   # sync the files and restart the app
-   - rsync -avrc --delete --exclude=.env "$PWD/" root@$SERVER_IP:/root/$PROJECT_NAME2/
-   - ssh root@$SERVER_IP "cd /root/$PROJECT_NAME2/; npm install; pm2 restart $PROJECT_NAME2"
+   - npm install
+   - node ./specs/start.js ./specs/db-postgres.spec.js
