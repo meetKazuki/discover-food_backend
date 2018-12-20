@@ -4,7 +4,7 @@ const { Schema } = mongoose
 
 const Meal = new Schema({
   vendor: {
-    type: Schema.Types.ObjectId, ref: 'Vendor'
+    type: Schema.Types.ObjectId, ref: 'User'
   },
   name: {
     type: String
@@ -26,16 +26,6 @@ const Meal = new Schema({
   },
   timeToPrepare: {
     type: Number
-  },
-  location: {
-    type: {
-      type: String,
-      enum: ['Point']
-    },
-    coordinates: {
-      type: [Number],
-      index: '2dsphere'
-    }
   }
 })
 

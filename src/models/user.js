@@ -60,18 +60,34 @@ const User = new Schema({
   resetPasswordExpires: {
     type: Number
   },
-  role: {
+  role: [{
     type: String
-  },
+  }],
   image: {
     type: String
   },
   location: {
-    type: Schema.Types.ObjectId, ref: 'Point'
+    type: {
+      type: String,
+      enum: ['Point']
+    },
+    coordinates: {
+      type: [Number],
+      index: '2dsphere'
+    }
   },
   favoriteVendors: [{
     type: Schema.Types.ObjectId, ref: 'Vendor'
-  }]
+  }],
+  usertype: {
+    type: String
+  },
+  businessName: {
+    type: String
+  },
+  foodType: {
+    type: String
+  }
 })
 
 User.pre('validate', function (next) {
