@@ -6,9 +6,6 @@ const Cart = Schema({
   user: {
     type: Schema.Types.ObjectId, ref: 'User'
   },
-  vendor: {
-    type: Schema.Types.ObjectId, ref: 'Vendor'
-  },
   cartItems: [{
     type: Schema.Types.ObjectId, ref: 'Meal'
   }],

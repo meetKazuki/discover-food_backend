@@ -1,12 +1,12 @@
 const TokenManager = require('../utils/token')
 const config = require('../config')
 
-const authorize = (roles = []) => {
+const authorize = (role) => {
   // roles param can be a single role string (e.g. Role.User or 'User')
   // or an array of roles (e.g. [Role.Admin, Role.User] or ['Admin', 'User'])
-  if (typeof roles === 'string') {
-    roles = [roles]
-  }
+  // if (typeof roles === 'string') {
+  //   roles = [roles]
+  // }
 
   return (req, res, next) => {
     const tokenManager = new TokenManager()
@@ -19,7 +19,7 @@ const authorize = (roles = []) => {
 
     tokenManager.verify(req.token, config.tokenSecret)
       .then((decodedToken) => {
-        if (roles.length && !roles.includes(decodedToken.data.role)) {
+        if (role !== decodedToken.data.role) {
           return res.status(401).json({ message: 'Unauthorized' })
         }
 
@@ -37,6 +37,7 @@ const authorize = (roles = []) => {
             }
 
             req.currentUser = userExists
+            req.role = role
             next()
           })
           .catch((err) => {
