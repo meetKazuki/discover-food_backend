@@ -20,7 +20,10 @@ const authorize = (role) => {
     tokenManager.verify(req.token, config.tokenSecret)
       .then((decodedToken) => {
         if (role !== decodedToken.data.role) {
-          return res.status(401).json({ message: 'Unauthorized' })
+          return res.status(401).json({
+            message: 'Unauthorized',
+            statuscode: 401
+          })
         }
 
         const { id } = decodedToken.data
@@ -41,10 +44,16 @@ const authorize = (role) => {
             next()
           })
           .catch((err) => {
-            res.status(err.statusCode).send(err.message)
+            res.status(err.statusCode).send({
+              message: err.message,
+              statusCode: err.statusCode
+            })
           })
       })
-      .catch(err => res.status(403).send({ message: err.message }))
+      .catch(err => res.status(403).send({
+        message: err.message,
+        statusCode: err.statusCode
+      }))
   }
 }
 

@@ -67,7 +67,7 @@ const register = (req, res) => {
     })
   }
 
-  const isValidRole = [ADMIN, USER, VENDOR].indexOf(req.body.role.toLowerCase())
+  const isValidRole = [USER, VENDOR].indexOf(req.body.role.toLowerCase())
 
   if (isValidRole < 0) {
     const invalidRoleError = new Error()
@@ -324,7 +324,8 @@ const forgotPassword = (req, res) => {
         .then(message => res.status(201).send({
           message: 'Email to request password change successfully sent',
           data: message,
-          statusCode: 201
+          statusCode: 201,
+          token: forgotPasswordToken
         }))
         .catch(() => {
           const userUpdateError = new Error()

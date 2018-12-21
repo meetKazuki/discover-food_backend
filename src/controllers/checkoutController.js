@@ -75,21 +75,13 @@ const checkout = (req, res) => {
 
       const vendorIds = cartExists.cartItems.map(item => mongoose.Types.ObjectId(item.vendor))
 
-      return req.Models.Vendor.find({
+      return req.Models.User.find({
         _id: { $in: vendorIds }
       })
-        .populate({
-          path: 'user',
-          populate: {
-            path: 'location',
-            model: 'Point'
-          }
-        })
-        .exec()
     })
     .then((vendors) => {
       const mealLocation = vendors
-        .map(vendor => vendor.user.location.coordinates.join(','))
+        .map(vendor => vendor.location.coordinates.join(','))
       return getDurationBetweenLocations(mealLocation, [modifiedInputValues.shippingAddress])
     })
     .then((duration) => {
