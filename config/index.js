@@ -16,7 +16,9 @@ environments.development = {
   paystackPublicKey: process.env.PAYSTACK_PUBLIC_KEY,
   paystackSecretKey: process.env.PAYSTACK_SECRET_KEY,
   geocodingApiKey: process.env.GEOCODING_API_KEY,
-  distanceMatrixApiKey: process.env.DISTANCE_MATRIX_API_KEY
+  distanceMatrixApiKey: process.env.DISTANCE_MATRIX_API_KEY,
+  firebaseCloudMessagingApiKey: process.env.FIREBASE_CLOUD_MSG_API_KEY,
+  firebaseCloudMessagingRegWebToken: process.env.FIREBASE_CLOUD_MSG_REG_WEB_TOKEN
 }
 
 environments.production = {

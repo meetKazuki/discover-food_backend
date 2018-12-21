@@ -5,6 +5,10 @@ const {
 } = require('../../utils/paymentService')
 
 const {
+  pushNotificationService
+} = require('../../utils/pushNotificationService')
+
+const {
   getDurationBetweenLocations
 } = require('../../utils/googleDistanceMatrixService')
 
@@ -56,6 +60,7 @@ const checkout = (req, res) => {
 
   let cart
   let timeToArrival
+  let transactionInfo
 
   req.Models.Cart.findOne({
     user: currentUser._id
@@ -107,17 +112,19 @@ const checkout = (req, res) => {
         verifiedTransaction.data.status === 'success'
         || verifiedTransaction.data.status === 'ongoing'
       ) {
-        return req.Models.Order.create({
-          dateCreated: Date.now(),
-          customer: currentUser._id,
-          cart: cart._id,
-          shippingAddress: modifiedInputValues.shippingAddress,
-          paymentId: verifiedTransaction.data.id,
-          referenceId: verifiedTransaction.data.reference,
-          amount: verifiedTransaction.data.amount
-        })
+        transactionInfo = verifiedTransaction
+        return pushNotificationService('Checkout was successful')
       }
     })
+    .then(() => req.Models.Order.create({
+      dateCreated: Date.now(),
+      customer: currentUser._id,
+      cart: cart._id,
+      shippingAddress: modifiedInputValues.shippingAddress,
+      paymentId: transactionInfo.data.id,
+      referenceId: transactionInfo.data.reference,
+      amount: transactionInfo.data.amount
+    }))
     .then(orderCreated => res.status(201).send({
       statusCode: 201,
       message: 'order successfully created',

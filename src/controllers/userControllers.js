@@ -2,6 +2,9 @@ const crypto = require('crypto')
 
 const TokenManager = require('../../utils/token')
 const EmailServiceManager = require('../../utils/emailService')
+const {
+  pushNotificationService
+} = require('../../utils/pushNotificationService')
 const config = require('../../config')
 const { hash } = require('../../utils/hash')
 const {
