@@ -85,7 +85,7 @@ const User = new Schema({
   businessName: {
     type: String
   },
-  foodType: {
+  vendorRequest: {
     type: String
   }
 })

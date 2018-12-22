@@ -2,9 +2,9 @@ const crypto = require('crypto')
 
 const TokenManager = require('../../utils/token')
 const EmailServiceManager = require('../../utils/emailService')
-const {
-  pushNotificationService
-} = require('../../utils/pushNotificationService')
+// const {
+//   pushNotificationService
+// } = require('../../utils/pushNotificationService')
 const config = require('../../config')
 const { hash } = require('../../utils/hash')
 const {
@@ -14,8 +14,7 @@ const {
 
 const {
   USER,
-  VENDOR,
-  ADMIN
+  VENDOR
 } = require('../../utils/constant')
 
 /**
@@ -189,7 +188,7 @@ const login = (req, res) => {
     })
   }
 
-  const isValidRole = [ADMIN, USER, VENDOR].indexOf(req.body.role.toLowerCase())
+  const isValidRole = [USER, VENDOR].indexOf(req.body.role.toLowerCase())
 
   if (isValidRole < 0) {
     const invalidRoleError = new Error()
