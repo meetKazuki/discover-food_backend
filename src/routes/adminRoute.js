@@ -13,5 +13,7 @@ router.get('/admin/get-user/:userId', authorize(['admin', 'super-admin']), admin
 router.patch('/admin/activate-vendor/:userId', authorize(['admin', 'super-admin']), adminController.activeUserVendorRole)
 router.get('/admin/pending-vendors-request', authorize(['admin', 'super-admin']), adminController.getAllPendingVendorRequest)
 router.post('/admin/login', adminController.login)
+router.post('/admin/forgot-password', adminController.forgotPassword)
+router.patch('/admin/reset-password', adminController.resetPassword)
 
 module.exports = router

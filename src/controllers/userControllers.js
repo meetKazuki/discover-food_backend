@@ -472,7 +472,13 @@ const viewProfile = (req, res) => {
  */
 const editProfile = (req, res) => {
   const { currentUser } = req
-  const fieldInputs = ['firstName', 'lastName', 'imageUrl', 'phone', 'location']
+  const fieldInputs = [
+    'firstName',
+    'lastName',
+    'imageUrl',
+    'phone',
+    'password',
+    'location']
   const inputVals = fieldInputs.filter(fieldInput => req.body[fieldInput])
     .map(value => ({
       [value]: req.body[value]
@@ -501,6 +507,10 @@ const editProfile = (req, res) => {
     modifiedInputValues.location = {
       coordinates: [latitude, longitude]
     }
+  }
+
+  if (modifiedInputValues.password) {
+
   }
 
   return req.Models.User.findOneAndUpdate({
