@@ -90,8 +90,14 @@ const register = (req, res) => {
     email: req.body.email
   })
     .then((registeredUser) => {
-      if (!registeredUser) {
+      if (!registeredUser && req.body.role === 'user') {
         modifiedInputValues.role = [req.body.role.toLowerCase()]
+        return req.Models.User.create(modifiedInputValues)
+      }
+
+      if (!registeredUser && req.body.role === 'vendor') {
+        delete modifiedInputValues.role
+        modifiedInputValues.vendorRequest = 'pending'
         return req.Models.User.create(modifiedInputValues)
       }
 

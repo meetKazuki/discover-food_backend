@@ -11,8 +11,9 @@ const authorize = (role = []) => {
   let roles
   if (!Array.isArray(role)) {
     roles = [role]
+  } else {
+    roles = role
   }
-  roles = role
   return (req, res, next) => {
     const tokenManager = new TokenManager()
 
@@ -27,26 +28,25 @@ const authorize = (role = []) => {
 
     tokenManager.verify(req.token, config.tokenSecret)
       .then((decodedToken) => {
-        if (!role.includes(decodedToken.data.role)) {
-          return res.status(401).json({
-            message: 'Unauthorized',
-            statuscode: 401
-          })
+        if (!roles.includes(decodedToken.data.role)) {
+          const unAuthorizedError = new Error()
+          unAuthorizedError.message = 'Unauthorized to perform action'
+          unAuthorizedError.statusCode = 401
+          return Promise.reject(unAuthorizedError)
         }
 
         const { id } = decodedToken.data
-        if (userTypes.includes(role[0])) {
+        if (userTypes.includes(roles[0])) {
           return req.Models.User.findOne({
             _id: id
           })
         }
 
-        if (adminTypes.includes(role[0])) {
+        if (adminTypes.includes(roles[0])) {
           return req.Models.Admin.findOne({
             _id: id
           })
         }
-        // Verify that user is registered
       })
       .then((userExists) => {
         if (!userExists) {
@@ -60,9 +60,9 @@ const authorize = (role = []) => {
         req.role = role
         next()
       })
-      .catch(err => res.status(403).send({
-        message: err.message,
-        statusCode: 403
+      .catch(err => res.status(err.statusCode ? err.statusCode : 500).send({
+        message: err.message ? err.message : 'Something went wrong',
+        statusCode: err.statusCode ? err.statusCode : 500
       }))
   }
 }

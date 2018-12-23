@@ -18,7 +18,7 @@ const {
 const token = new TokenManager()
 
 /**
- * Log in a registered user in the application
+ * Log in a registered admin in the application
  * Ensures all fields are not empty
  * Ensures all field input satisfy validation rules
  * Ensures that a user that is not registered is not logged in
@@ -128,6 +128,14 @@ const login = (req, res) => {
       }))
 }
 
+/**
+ * Send an email to add as an admin
+ * @param {Object} req request object
+ * @param {String} req.body.email email to be added as admin
+ * @param {Object} res response object
+ *
+ * @return {Object} response
+ */
 const addAsAdminEmail = (req, res) => {
   const fieldIsEmpty = hasEmptyField([
     'email'
@@ -190,12 +198,7 @@ const addAsAdminEmail = (req, res) => {
 }
 
 /**
- * Send an email to a user that has successfully changed password
- * Send appropriate error message if action is not successful
- * Ensures all fields are not empty
- * Ensures all field input satisfy validation rules
- * Ensures that the new password is exactly what the user wants (must match)
- * Ensures that the token is valid and has not expired
+ * Register new user as an admin
  * @param {Object} req request object
  * @param {Object} res response object
  *
@@ -203,7 +206,7 @@ const addAsAdminEmail = (req, res) => {
  */
 const createAdmin = (req, res) => {
   const fieldIsEmpty = hasEmptyField([
-    'password', 'email'
+    'password', 'email', 'token'
   ], req.body)
 
   if (fieldIsEmpty) {
@@ -321,6 +324,13 @@ const createAdmin = (req, res) => {
     }))
 }
 
+/**
+ * Get all users in the application
+ * @param {Object} req request object
+ * @param {Object} res response object
+ *
+ * @return {Object} response
+ */
 const getAllUsers = (req, res) => req.Models.User.find({})
   .then(users => res.status(200).send({
     message: 'get users successful',
@@ -329,12 +339,76 @@ const getAllUsers = (req, res) => req.Models.User.find({})
   }))
   .catch(() => {
     const serverError = new Error()
-    serverError.message = 'Something went wrong, could not get user'
+    serverError.message = 'Something went wrong, could not get users'
     serverError.statusCode = 500
     return res.status(500).send(serverError)
   })
 
-const getAUser = (req, res) => {
+/**
+ * Get all pending vendor requests
+ * @param {Object} req request object
+ * @param {Object} res response object
+ *
+ * @return {Object} response
+ */
+const getAllPendingVendorRequest = (req, res) => req.Models.User.find({
+  vendorRequest: 'pending'
+})
+  .then(users => res.status(200).send({
+    message: 'get pending vendor requests successful',
+    statusCode: 200,
+    data: users
+  }))
+  .catch(() => {
+    const serverError = new Error()
+    serverError.message = 'Something went wrong, could not get users'
+    serverError.statusCode = 500
+    return res.status(500).send(serverError)
+  })
+
+/**
+ * Remove admin from application
+ * @param {Object} req request object
+ * @param {Object} res response object
+ *
+ * @return {Object} response
+ */
+const removeAdmin = (req, res) => {
+  const { adminId } = req.params
+  if (!adminId) {
+    const missingFieldError = new Error()
+    missingFieldError.message = 'Missing admin id'
+    missingFieldError.statusCode = 400
+    return res.status(400).send(missingFieldError)
+  }
+
+  req.Models.Admin.findOneAndDelete({
+    _id: adminId
+  })
+    .then((deletedAdmin) => {
+      if (!deletedAdmin) {
+        const adminDoesNotExist = new Error()
+        adminDoesNotExist.message = 'Admin does not exist'
+        adminDoesNotExist.statusCode = 400
+        return res.status(400).send(adminDoesNotExist)
+      }
+
+      res.status(201).send({
+        message: 'Admin successfully deleted',
+        statusCode: 201,
+        data: deletedAdmin
+      })
+    })
+}
+
+/**
+ * Get a single user in the application
+ * @param {Object} req request object
+ * @param {Object} res response object
+ *
+ * @return {Object} response
+ */
+const getSingleUser = (req, res) => {
   const { userId } = req.params
   if (!userId) {
     const missingFieldError = new Error()
@@ -348,10 +422,16 @@ const getAUser = (req, res) => {
       statusCode: 200,
       data: user
     }))
+    .catch(() => {
+      const serverError = new Error()
+      serverError.message = 'Something went wrong could not get user'
+      serverError.statusCode = 500
+      return res.status(500).send(serverError)
+    })
 }
 
 /**
- * A user should be able to edit his/her profile
+ * An admin should be able to edit a user's profile
  *
  * @param {Object} req request object
  * @param {string} req.body.firstName - The first name of the user.
@@ -365,55 +445,55 @@ const getAUser = (req, res) => {
  *
  * @return {Object} res response object
  */
-const editProfile = (req, res) => {
-  const { currentUser } = req
-  const fieldInputs = ['firstName', 'lastName', 'imageUrl', 'phone', 'location']
-  const inputVals = fieldInputs.filter(fieldInput => req.body[fieldInput])
-    .map(value => ({
-      [value]: req.body[value]
-    }))
+const activeUserVendorRole = (req, res) => {
+  const { userId } = req.params
 
-  if (!inputVals.length) {
+  if (!userId) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing required field'
     missingFieldError.statusCode = 400
     return res.status(400).send(missingFieldError)
   }
 
-  // Create key value pairs for different inputs
-  // combine all inputs into one object
-  const combineInputsInObjReducer = (inputsObject, currentValue) => {
-    const [key] = Object.keys(currentValue)
-    inputsObject[key] = currentValue[key]
-    return inputsObject
-  }
-
-  const modifiedInputValues = inputVals.reduce(combineInputsInObjReducer, {})
-
-  if (modifiedInputValues.location) {
-    const { latitude } = modifiedInputValues.location
-    const { longitude } = modifiedInputValues.location
-    modifiedInputValues.location = {
-      coordinates: [latitude, longitude]
-    }
-  }
-
-  return req.Models.User.findOneAndUpdate({
-    _id: currentUser._id
-  }, modifiedInputValues, { new: true })
-    .then((updatedUser) => {
-      if (!updatedUser) {
-        const userNotUpdatedError = new Error()
-        userNotUpdatedError.message = 'Something went wrong, user could not be updated'
-        userNotUpdatedError.statusCode = 500
-        return Promise.reject(userNotUpdatedError)
+  req.Models.User.findOne({
+    _id: userId
+  })
+    .then((registeredUser) => {
+      if (!registeredUser) {
+        const userNotRegisteredError = new Error()
+        userNotRegisteredError.message = 'user is not registered in application'
+        userNotRegisteredError.statusCode = 400
+        return Promise.reject(userNotRegisteredError)
       }
 
-      return req.Models.User.findById(updatedUser._id)
+      if (registeredUser.role.includes('vendor')) {
+        const userAlreadyAVendorError = new Error()
+        userAlreadyAVendorError.message = 'user is already a vendor'
+        userAlreadyAVendorError.statusCode = 400
+        return Promise.reject(userAlreadyAVendorError)
+      }
+
+      if (!registeredUser.vendorRequest) {
+        const noVendorRequestError = new Error()
+        noVendorRequestError.message = 'No vendor request for this user'
+        noVendorRequestError.statusCode = 400
+        return Promise.reject(noVendorRequestError)
+      }
+
+      let userRole = registeredUser.role ? registeredUser.role : []
+      userRole = userRole.concat(['vendor'])
+      return req.Models.User.findOneAndUpdate({
+        _id: userId
+      }, {
+        role: userRole,
+        vendorRequest: undefined
+      }, {
+        new: true
+      })
     })
     .then(userUpdate => res.status(200).send({
       statusCode: 200,
-      message: 'Successfully updated user',
+      message: 'Successfully activated user vendor role',
       data: userUpdate.toObject()
     }))
     .catch(err => res.status(err.statusCode ? err.statusCode : 500)
@@ -428,5 +508,8 @@ module.exports = {
   createAdmin,
   login,
   getAllUsers,
-  getAUser
+  getSingleUser,
+  activeUserVendorRole,
+  removeAdmin,
+  getAllPendingVendorRequest
 }
