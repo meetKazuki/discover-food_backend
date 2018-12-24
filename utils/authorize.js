@@ -1,13 +1,19 @@
 const TokenManager = require('../utils/token')
 const config = require('../config')
+const {
+  USER,
+  VENDOR,
+  ADMIN,
+  SUPERADMIN
+} = require('../utils/constant')
 
-const authorize = (role) => {
-  // roles param can be a single role string (e.g. Role.User or 'User')
-  // or an array of roles (e.g. [Role.Admin, Role.User] or ['Admin', 'User'])
-  // if (typeof roles === 'string') {
-  //   roles = [roles]
-  // }
-
+const authorize = (role = []) => {
+  let roles
+  if (!Array.isArray(role)) {
+    roles = [role]
+  } else {
+    roles = role
+  }
   return (req, res, next) => {
     const tokenManager = new TokenManager()
 
@@ -17,34 +23,47 @@ const authorize = (role) => {
       req.bearer = bearer
     }
 
+    const userTypes = [USER, VENDOR]
+    const adminTypes = [ADMIN, SUPERADMIN]
+
     tokenManager.verify(req.token, config.tokenSecret)
       .then((decodedToken) => {
-        if (role !== decodedToken.data.role) {
-          return res.status(401).json({ message: 'Unauthorized' })
+        if (!roles.includes(decodedToken.data.role)) {
+          const unAuthorizedError = new Error()
+          unAuthorizedError.message = 'Unauthorized to perform action'
+          unAuthorizedError.statusCode = 401
+          return Promise.reject(unAuthorizedError)
         }
 
         const { id } = decodedToken.data
-        // Verify that user is registered
-        req.Models.User.findOne({
-          _id: id
-        })
-          .then((userExists) => {
-            if (!userExists) {
-              const userNotFound = new Error()
-              userNotFound.message = 'User not registered'
-              userNotFound.statusCode = 400
-              return Promise.reject(userNotFound)
-            }
+        if (userTypes.includes(roles[0])) {
+          return req.Models.User.findOne({
+            _id: id
+          })
+        }
 
-            req.currentUser = userExists
-            req.role = role
-            next()
+        if (adminTypes.includes(roles[0])) {
+          return req.Models.Admin.findOne({
+            _id: id
           })
-          .catch((err) => {
-            res.status(err.statusCode).send(err.message)
-          })
+        }
       })
-      .catch(err => res.status(403).send({ message: err.message }))
+      .then((userExists) => {
+        if (!userExists) {
+          const userNotFound = new Error()
+          userNotFound.message = 'User not registered'
+          userNotFound.statusCode = 400
+          return Promise.reject(userNotFound)
+        }
+
+        req.currentUser = userExists
+        req.role = role
+        next()
+      })
+      .catch(err => res.status(err.statusCode ? err.statusCode : 500).send({
+        message: err.message ? err.message : 'Something went wrong',
+        statusCode: err.statusCode ? err.statusCode : 500
+      }))
   }
 }
 

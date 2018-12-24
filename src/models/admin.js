@@ -14,7 +14,7 @@ const {
 
 const { Schema } = mongoose
 
-const User = new Schema({
+const Admin = new Schema({
   firstName: {
     type: String,
     validate: [{
@@ -75,46 +75,34 @@ const User = new Schema({
       type: [Number],
       index: '2dsphere'
     }
-  },
-  favoriteVendors: [{
-    type: Schema.Types.ObjectId, ref: 'User'
-  }],
-  usertype: {
-    type: String
-  },
-  businessName: {
-    type: String
-  },
-  vendorRequest: {
-    type: String
   }
 })
 
-User.pre('validate', function (next) {
-  const user = this
-  if (!passwordLength(user.password)) {
+Admin.pre('validate', function (next) {
+  const admin = this
+  if (!passwordLength(admin.password)) {
     return next({ message: 'password must have 6-255 characters' })
   }
-  if (!hasNumber(user.password)) {
+  if (!hasNumber(admin.password)) {
     return next({ message: 'password must contain at least a number' })
   }
-  if (!hasSpecialCharater(user.password)) {
+  if (!hasSpecialCharater(admin.password)) {
     return next({ message: 'password must contain at least a special character' })
   }
   next()
 })
 
 // hash password before saving to database
-User.pre('save', function (next) {
-  const user = this
-  user.password = hash(user.password)
+Admin.pre('save', function (next) {
+  const admin = this
+  admin.password = hash(admin.password)
   next()
 })
 
-User.set('toObject', {
+Admin.set('toObject', {
   transform: (doc, ret) => {
     delete ret.password
   }
 })
 
-module.exports = mongoose.model('User', User)
+module.exports = mongoose.model('Admin', Admin)

@@ -6,6 +6,7 @@ const Order = require('./order')
 const Point = require('./point')
 const MealImage = require('./mealImage')
 const MealRating = require('./mealRating')
+const Admin = require('./admin')
 
 module.exports = {
   User,
@@ -15,5 +16,6 @@ module.exports = {
   Order,
   Point,
   MealImage,
-  MealRating
+  MealRating,
+  Admin
 }

@@ -2,6 +2,9 @@ const crypto = require('crypto')
 
 const TokenManager = require('../../utils/token')
 const EmailServiceManager = require('../../utils/emailService')
+// const {
+//   pushNotificationService
+// } = require('../../utils/pushNotificationService')
 const config = require('../../config')
 const { hash } = require('../../utils/hash')
 const {
@@ -11,8 +14,7 @@ const {
 
 const {
   USER,
-  VENDOR,
-  ADMIN
+  VENDOR
 } = require('../../utils/constant')
 
 /**
@@ -67,7 +69,7 @@ const register = (req, res) => {
     })
   }
 
-  const isValidRole = [ADMIN, USER, VENDOR].indexOf(req.body.role.toLowerCase())
+  const isValidRole = [USER, VENDOR].indexOf(req.body.role.toLowerCase())
 
   if (isValidRole < 0) {
     const invalidRoleError = new Error()
@@ -88,8 +90,14 @@ const register = (req, res) => {
     email: req.body.email
   })
     .then((registeredUser) => {
-      if (!registeredUser) {
+      if (!registeredUser && req.body.role === 'user') {
         modifiedInputValues.role = [req.body.role.toLowerCase()]
+        return req.Models.User.create(modifiedInputValues)
+      }
+
+      if (!registeredUser && req.body.role === 'vendor') {
+        delete modifiedInputValues.role
+        modifiedInputValues.vendorRequest = 'pending'
         return req.Models.User.create(modifiedInputValues)
       }
 
@@ -186,7 +194,7 @@ const login = (req, res) => {
     })
   }
 
-  const isValidRole = [ADMIN, USER, VENDOR].indexOf(req.body.role.toLowerCase())
+  const isValidRole = [USER, VENDOR].indexOf(req.body.role.toLowerCase())
 
   if (isValidRole < 0) {
     const invalidRoleError = new Error()
@@ -324,7 +332,8 @@ const forgotPassword = (req, res) => {
         .then(message => res.status(201).send({
           message: 'Email to request password change successfully sent',
           data: message,
-          statusCode: 201
+          statusCode: 201,
+          token: forgotPasswordToken
         }))
         .catch(() => {
           const userUpdateError = new Error()
@@ -463,7 +472,13 @@ const viewProfile = (req, res) => {
  */
 const editProfile = (req, res) => {
   const { currentUser } = req
-  const fieldInputs = ['firstName', 'lastName', 'imageUrl', 'phone', 'location']
+  const fieldInputs = [
+    'firstName',
+    'lastName',
+    'imageUrl',
+    'phone',
+    'password',
+    'location']
   const inputVals = fieldInputs.filter(fieldInput => req.body[fieldInput])
     .map(value => ({
       [value]: req.body[value]
@@ -492,6 +507,10 @@ const editProfile = (req, res) => {
     modifiedInputValues.location = {
       coordinates: [latitude, longitude]
     }
+  }
+
+  if (modifiedInputValues.password) {
+
   }
 
   return req.Models.User.findOneAndUpdate({
