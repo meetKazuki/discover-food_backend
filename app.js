@@ -1,6 +1,7 @@
 const express = require('express')
 const path = require('path')
 const morgan = require('morgan')
+const cors = require('cors')
 
 const db = require('./utils/db')
 const config = require('./config/index.js')
@@ -14,6 +15,7 @@ const Models = require('./src/models')
 const app = express()
 
 // Parse the payload and add to request.body
+app.use(cors())
 app.use(express.urlencoded({ extended: false }))
 app.use(express.json())
 app.use(express.static(path.join(__dirname, 'public')))
