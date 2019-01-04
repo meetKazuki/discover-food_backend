@@ -227,7 +227,6 @@ const uploadMealImage = (req, res) => {
     }))
 
   let images
-  let vendor
   if (!mealId) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Missing meal id'
@@ -250,32 +249,11 @@ const uploadMealImage = (req, res) => {
 
   const modifiedInputValues = inputVals.reduce(combineInputsInObjReducer, {})
 
-  req.Models.Vendor.findOne({
-    user: currentUser._id
+
+  req.Models.Meal.findOne({
+    _id: mealId,
+    vendor: currentUser._id
   })
-    .then((vendorExists) => {
-      if (!vendorExists) {
-        const vendorNotFound = new Error()
-        vendorNotFound.message = 'User not registered as vendor'
-        vendorNotFound.statusCode = 400
-        return res.status(400).send(vendorNotFound)
-      }
-
-      vendor = vendorExists
-      const createdImages = modifiedInputValues
-        .mealImages.map(image => ({
-          url: image
-        }))
-
-      return req.Models.MealImage.create(createdImages)
-    })
-    .then((savedImages) => {
-      images = savedImages
-      return req.Models.Meal.findOne({
-        _id: mealId,
-        vendor: vendor._id
-      })
-    })
     .then((updatedMeal) => {
       if (!updatedMeal) {
         const mealDoesNotExistError = new Error()
@@ -284,28 +262,29 @@ const uploadMealImage = (req, res) => {
         return res.status(400).send(mealDoesNotExistError)
       }
 
-      if ((updatedMeal.mealImages.length + images.length) > 10) {
+      images = updatedMeal.mealImages.concat(modifiedInputValues.mealImages)
+
+      if (images.length > 10) {
         const mealImagesNotGreaterThanTen = new Error()
         mealImagesNotGreaterThanTen.message = 'The images of a meal cannot be greater than 10'
         mealImagesNotGreaterThanTen.statusCode = 400
         return res.status(400).send(mealImagesNotGreaterThanTen)
       }
 
-      images.forEach((image) => {
-        updatedMeal.mealImages.push(image._id)
+      return req.Models.Meal.findOneAndUpdate({
+        _id: mealId,
+        vendor: currentUser._id
+      }, {
+        mealImages: images
+      }, { new: true })
+    })
+    .then((updatedMealImage) => {
+      res.status(200).send({
+        statusCode: 200,
+        message: 'Successfully updated Meal',
+        data: updatedMealImage
       })
-      return updatedMeal.save()
     })
-    .then(mealUpdate => req.Models.Meal.findOne({
-      _id: mealUpdate._id
-    })
-      .populate('mealImages')
-      .exec())
-    .then(updatedMealImage => res.status(200).send({
-      statusCode: 200,
-      message: 'Successfully updated Meal',
-      data: updatedMealImage
-    }))
     .catch(() => {
       const serverError = new Error()
       serverError.message = 'Something went wrong, meal could not be updated'
