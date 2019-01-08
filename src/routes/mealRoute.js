@@ -12,5 +12,7 @@ router.get('/meal/view/:mealId', authorize('vendor'), mealController.viewMeal)
 router.put('/meal/upload/:mealId', authorize('vendor'), mealController.uploadMealImage)
 router.post('/meal/rating/:mealId', authorize('vendor'), mealController.createMealRating)
 router.patch('/meal/rating/edit/:mealId', authorize('vendor'), mealController.changeMealRating)
+router.get('/meal/all', authorize(['vendor', 'user']), mealController.viewAllMeals)
+router.get('/meal/vendor-meals', authorize('vendor'), mealController.viewAllVendorMeals)
 
 module.exports = router
