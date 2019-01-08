@@ -25,7 +25,6 @@ const authorize = (role = []) => {
 
     const userTypes = [USER, VENDOR]
     const adminTypes = [ADMIN, SUPERADMIN]
-
     tokenManager.verify(req.token, config.tokenSecret)
       .then((decodedToken) => {
         if (!roles.includes(decodedToken.data.role)) {

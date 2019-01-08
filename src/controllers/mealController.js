@@ -499,6 +499,87 @@ const searchForMeals = (req, res) => {
     })
 }
 
+/**
+ * A user should be able to view a meal
+ * @param {Object} req
+ * @param {Object} res
+ *
+ * @return {Object} response
+ */
+const viewAllMeals = (req, res) => {
+  let {
+    perPage,
+    page
+  } = req.query
+  perPage = perPage ? Number(perPage) : 10
+  page = page ? Number(page) : 1
+  req.Models.Meal.find()
+    .skip(perPage * (page - 1))
+    .limit(perPage)
+    .populate('vendor')
+    .exec()
+    .then((meals) => {
+      if (!meals) {
+        const mealDoesNotExistError = new Error()
+        mealDoesNotExistError.message = 'Meal does not exist'
+        mealDoesNotExistError.statusCode = 400
+        return res.status(400).send(mealDoesNotExistError)
+      }
+      return res.status(200).send({
+        statusCode: 200,
+        message: 'Successfully got a meal',
+        data: meals
+      })
+    })
+    .catch(() => {
+      const serverError = new Error()
+      serverError.message = 'Something went wrong, meals could not be fetched'
+      return res.status(500).send(serverError)
+    })
+}
+
+/**
+ * A user should be able to view a meal
+ * @param {Object} req
+ * @param {Object} res
+ *
+ * @return {Object} response
+ */
+const viewAllVendorMeals = (req, res) => {
+  const { currentUser } = req
+  let {
+    perPage,
+    page
+  } = req.query
+  perPage = perPage ? Number(perPage) : 10
+  page = page ? Number(page) : 1
+  req.Models.Meal.find({
+    vendor: currentUser._id
+  })
+    .skip(perPage * (page - 1))
+    .limit(perPage)
+    .populate('vendor')
+    .exec()
+    .then((meals) => {
+      if (!meals) {
+        const mealDoesNotExistError = new Error()
+        mealDoesNotExistError.message = 'Meal does not exist'
+        mealDoesNotExistError.statusCode = 400
+        return res.status(400).send(mealDoesNotExistError)
+      }
+      return res.status(200).send({
+        statusCode: 200,
+        message: 'Successfully got a meal',
+        data: meals
+      })
+    })
+    .catch(() => {
+      const serverError = new Error()
+      serverError.message = 'Something went wrong, meals could not be fetched'
+      return res.status(500).send(serverError)
+    })
+}
+
 module.exports = {
   createMeal,
   editMeal,
@@ -507,5 +588,7 @@ module.exports = {
   uploadMealImage,
   createMealRating,
   changeMealRating,
-  searchForMeals
+  searchForMeals,
+  viewAllMeals,
+  viewAllVendorMeals
 }
