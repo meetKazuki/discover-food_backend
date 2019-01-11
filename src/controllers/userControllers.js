@@ -90,16 +90,16 @@ const register = (req, res) => {
     email: req.body.email
   })
     .then((registeredUser) => {
-      if (!registeredUser && req.body.role === 'user') {
+      if (!registeredUser) {
         modifiedInputValues.role = [req.body.role.toLowerCase()]
         return req.Models.User.create(modifiedInputValues)
       }
 
-      if (!registeredUser && req.body.role === 'vendor') {
-        delete modifiedInputValues.role
-        modifiedInputValues.vendorRequest = 'pending'
-        return req.Models.User.create(modifiedInputValues)
-      }
+      // if (!registeredUser && req.body.role === 'vendor') {
+      //   delete modifiedInputValues.role
+      //   modifiedInputValues.vendorRequest = 'pending'
+      //   return req.Models.User.create(modifiedInputValues)
+      // }
 
       const roleExists = registeredUser.role
         .indexOf(modifiedInputValues.role.toLowerCase())
@@ -478,7 +478,9 @@ const editProfile = (req, res) => {
     'imageUrl',
     'phone',
     'password',
-    'location']
+    'location',
+    'address'
+  ]
   const inputVals = fieldInputs.filter(fieldInput => req.body[fieldInput])
     .map(value => ({
       [value]: req.body[value]
