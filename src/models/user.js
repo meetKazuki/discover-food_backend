@@ -66,6 +66,9 @@ const User = new Schema({
   image: {
     type: String
   },
+  address: {
+    type: String
+  },
   location: {
     type: {
       type: String,
