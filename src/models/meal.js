@@ -1,7 +1,6 @@
 const mongoose = require('mongoose')
 
 const { Schema } = mongoose
-
 const Meal = new Schema({
   vendor: {
     type: Schema.Types.ObjectId, ref: 'User'
@@ -12,10 +11,13 @@ const Meal = new Schema({
   description: {
     type: String
   },
-  unitPriceType: {
+  orderType: {
     type: String
   },
-  unitPriceAmount: {
+  orderSize: {
+    type: String
+  },
+  pricePerOrderSize: {
     type: Number
   },
   mealImages: [{

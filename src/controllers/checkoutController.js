@@ -76,7 +76,7 @@ const checkout = (req, res) => {
       }
       cart = cartExists
       // paymentInfo.amount = orderExists.cartItems
-      //   .reduce((currentPrice, cartItem) => currentPrice + cartItem.unitPriceAmount, 0) * 100
+      //   .reduce((currentPrice, cartItem) => currentPrice + cartItem.pricePerOrderSize, 0) * 100
 
       const vendorIds = cartExists.cartItems.map(item => mongoose.Types.ObjectId(item.vendor))
 
