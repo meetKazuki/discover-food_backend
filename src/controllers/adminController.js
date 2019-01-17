@@ -15,6 +15,110 @@ const {
   SUPERADMIN
 } = require('../../utils/constant')
 
+/**
+ * Register a new user into the application
+ * Ensures all fields are not empty
+ * Ensures all field input satisfy validation rules
+ * Ensures that a user that already exists is not registered
+ * check in data if user is registered
+ * If registered check if role is vendor
+ * If a vendor return an error vendor already registered
+ * If not vendor but user then update role as both user and vendor
+ * If not user then register as a vendor
+ * @param {Object} req request object
+ * @param {Object} res response object
+ *
+ * @return {Object} res response object
+ */
+const register = (req, res) => {
+  const fieldIsEmpty = hasEmptyField([
+    'email',
+    'password',
+    'role'
+  ], req.body)
+
+  if (fieldIsEmpty) {
+    const missingFieldError = new Error()
+    missingFieldError.message = 'Missing required field'
+    missingFieldError.statusCode = 400
+    return res.status(400).send(missingFieldError)
+  }
+
+  const inputVals = [
+    'email',
+    'password',
+    'role'
+  ].filter(fieldInput => req.body[fieldInput])
+    .map(value => ({
+      [value]: req.body[value]
+    }))
+
+  const errorMsg = mongoModelValidation(req.body, req.Models.User)
+  if (errorMsg) {
+    return res.status(400).send({
+      message: errorMsg.message,
+      statusCode: 400
+    })
+  }
+
+  const isValidRole = [SUPERADMIN].indexOf(req.body.role.toLowerCase())
+
+  if (isValidRole < 0) {
+    const invalidRoleError = new Error()
+    invalidRoleError.message = 'This role is not yet a valid role'
+    invalidRoleError.statusCode = 400
+    return res.status(400).send(invalidRoleError)
+  }
+
+  const combineInputsInObjReducer = (inputsObject, currentValue) => {
+    const [key] = Object.keys(currentValue)
+    inputsObject[key] = currentValue[key]
+    return inputsObject
+  }
+
+  const modifiedInputValues = inputVals.reduce(combineInputsInObjReducer, {})
+
+  req.Models.Admin.findOne({
+    email: req.body.email
+  })
+    .then((registeredAdmin) => {
+      if (!registeredAdmin) {
+        modifiedInputValues.role = [req.body.role.toLowerCase()]
+        return req.Models.Admin.create(modifiedInputValues)
+      }
+
+      const adminAlreadyExists = new Error()
+      adminAlreadyExists.message = 'User already registered as an admin'
+      adminAlreadyExists.statusCode = 400
+      return Promise.reject(adminAlreadyExists)
+    })
+    .then((adminRegisterSuccess) => {
+      if (adminRegisterSuccess) {
+        const registeredAdminObject = adminRegisterSuccess.toObject()
+        delete registeredAdminObject.password
+        const token = new TokenManager()
+        return res.status(201).send({
+          message: `User successfully created as ${modifiedInputValues.role}`,
+          statusCode: 201,
+          data: {
+            token: token.create(
+              {
+                id: adminRegisterSuccess._id,
+                role: req.body.role
+              }, config.tokenSecret
+            ),
+            user: registeredAdminObject
+          }
+        })
+      }
+    })
+    .catch(err => res.status(err.statusCode ? err.statusCode : 500)
+      .send({
+        message: err.message ? err.message : 'Something something went wrong',
+        statusCode: err.statusCode ? err.statusCode : 500
+      }))
+}
+
 const token = new TokenManager()
 
 /**
@@ -105,8 +209,8 @@ const login = (req, res) => {
         return Promise.reject(passwordDoesNotMatchError)
       }
 
-      const registeredUserObject = registeredUser.toObject()
-      delete registeredUserObject.password
+      const registeredAdminObject = registeredUser.toObject()
+      delete registeredAdminObject.password
       return res.status(201).send({
         message: 'User successfully logged in',
         statusCode: 201,
@@ -117,7 +221,7 @@ const login = (req, res) => {
               role: req.body.role
             }, config.tokenSecret
           ),
-          user: registeredUserObject
+          user: registeredAdminObject
         }
       })
     })
@@ -683,6 +787,7 @@ module.exports = {
   addAsAdminEmail,
   createAdmin,
   login,
+  register,
   getAllUsers,
   getSingleUser,
   activeUserVendorRole,
