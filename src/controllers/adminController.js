@@ -783,6 +783,27 @@ const resetPassword = (req, res) => {
     })
 }
 
+/**
+ * Get all pending vendor requests
+ * @param {Object} req request object
+ * @param {Object} res response object
+ *
+ * @return {Object} response
+ */
+const getUsersLastTwentyFourHours = (req, res) => req.Models.User
+  .find({ createdAt: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) } })
+  .then(users => res.status(200).send({
+    message: 'got users in the last 24 hours',
+    statusCode: 200,
+    data: users
+  }))
+  .catch(() => {
+    const serverError = new Error()
+    serverError.message = 'Something went wrong, could not get users'
+    serverError.statusCode = 500
+    return res.status(500).send(serverError)
+  })
+
 module.exports = {
   addAsAdminEmail,
   createAdmin,
@@ -794,5 +815,6 @@ module.exports = {
   removeAdmin,
   getAllPendingVendorRequest,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  getUsersLastTwentyFourHours
 }

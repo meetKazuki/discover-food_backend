@@ -63,6 +63,9 @@ const User = new Schema({
   role: [{
     type: String
   }],
+  token: {
+    type: String
+  },
   image: {
     type: String
   },
@@ -91,6 +94,8 @@ const User = new Schema({
   vendorRequest: {
     type: String
   }
+}, {
+  timestamps: true
 })
 
 User.pre('validate', function (next) {
