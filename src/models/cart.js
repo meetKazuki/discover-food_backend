@@ -14,22 +14,14 @@ const Cart = Schema({
   },
   totalPrice: {
     type: Number
-  },
-  foodSize: {
-    type: String
-  },
-  orderType: {
-    type: String
   }
 })
 
 Cart.method('createCart', function (meal, user, orderType, foodSize) {
   this.cartItems.push(meal._id)
   this.totalQuantity = this.cartItems.length
-  this.totalPrice = meal.unitPriceAmount
+  this.totalPrice = meal.pricePerOrderSize
   this.vendor = meal.vendor._id
-  this.orderType = orderType
-  this.foodSize = foodSize
   this.user = user._id
   return this.save()
 })

@@ -12,8 +12,8 @@ const createMeal = (req, res) => {
   const fieldInputs = [
     'name',
     'description',
-    'unitPriceType',
-    'unitPriceAmount',
+    'orderSize',
+    'pricePerOrderSize',
     'quantity',
     'timeToPrepare'
   ]
@@ -73,8 +73,9 @@ const editMeal = (req, res) => {
   const fieldInputs = [
     'name',
     'description',
-    'unitPriceType',
-    'unitPriceAmount',
+    'orderSize',
+    'pricePerOrderSize',
+    'orderType',
     'quantity',
     'timeToPrepare'
   ]

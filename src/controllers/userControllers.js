@@ -511,10 +511,6 @@ const editProfile = (req, res) => {
     }
   }
 
-  if (modifiedInputValues.password) {
-
-  }
-
   return req.Models.User.findOneAndUpdate({
     _id: currentUser._id
   }, modifiedInputValues, { new: true })

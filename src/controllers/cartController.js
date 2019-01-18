@@ -1,6 +1,3 @@
-const {
-  hasEmptyField
-} = require('../../utils/validator')
 
 /**
  * A User should be able to create a cart
@@ -13,10 +10,7 @@ const createCart = (req, res) => {
   const { currentUser } = req
   const { mealId } = req.params
 
-  const fieldIsEmpty = hasEmptyField([
-    'orderType', 'foodType'], req.body)
-
-  if (!mealId && fieldIsEmpty) {
+  if (!mealId) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Meal id is missing'
     missingFieldError.statusCode = 400
@@ -204,7 +198,7 @@ const addMealToCart = (req, res) => {
     })
     .then((cartToUpdate) => {
       const mealIsInCart = cartToUpdate.cartItems.indexOf(meal._id)
-      const totalPrice = cart.totalPrice + meal.unitPriceAmount
+      const totalPrice = cart.totalPrice + meal.pricePerOrderSize
       if (mealIsInCart < 0) {
         return req.Models.Cart.findOneAndUpdate({
           _id: cartToUpdate._id
