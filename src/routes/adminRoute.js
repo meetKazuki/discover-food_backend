@@ -12,6 +12,8 @@ router.get('/admin/get-users', authorize(['admin', 'super-admin']), adminControl
 router.get('/admin/get-user/:userId', authorize(['admin', 'super-admin']), adminController.getSingleUser)
 router.patch('/admin/activate-vendor/:userId', authorize(['admin', 'super-admin']), adminController.activeUserVendorRole)
 router.get('/admin/pending-vendors-request', authorize(['admin', 'super-admin']), adminController.getAllPendingVendorRequest)
+router.get('/admin/users/previous-day', authorize(['admin', 'super-admin']), adminController.getUsersLastTwentyFourHours)
+router.get('/admin/users/active-users-previous-day', authorize(['admin', 'super-admin']), adminController.getActiveUsersLastTwentyFourHours)
 router.post('/super-admin/register', adminController.register)
 router.post('/admin/login', adminController.login)
 router.post('/admin/forgot-password', adminController.forgotPassword)

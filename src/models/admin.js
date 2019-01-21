@@ -76,6 +76,8 @@ const Admin = new Schema({
       index: '2dsphere'
     }
   }
+}, {
+  timestamps: true
 })
 
 Admin.pre('validate', function (next) {

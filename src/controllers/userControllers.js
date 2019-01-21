@@ -84,6 +84,7 @@ const register = (req, res) => {
     return inputsObject
   }
 
+  let token
   const modifiedInputValues = inputVals.reduce(combineInputsInObjReducer, {})
 
   req.Models.User.findOne({
@@ -113,30 +114,27 @@ const register = (req, res) => {
       const addedRole = registeredUser.role
         .concat([modifiedInputValues.role])
 
+      token = new TokenManager().create(
+        {
+          id: registeredUser._id,
+          role: req.body.role
+        }, config.tokenSecret
+      )
+
       return req.Models.User.findOneAndUpdate({
         _id: registeredUser._id
-      }, {
-        role: addedRole
-      },
-      {
-        new: true
-      })
+      }, { role: addedRole, token },
+      { new: true })
     })
     .then((userRegisterSuccess) => {
       if (userRegisterSuccess) {
         const registeredUserObject = userRegisterSuccess.toObject()
         delete registeredUserObject.password
-        const token = new TokenManager()
         return res.status(201).send({
           message: `User successfully created as ${modifiedInputValues.role}`,
           statusCode: 201,
           data: {
-            token: token.create(
-              {
-                id: userRegisterSuccess._id,
-                role: req.body.role
-              }, config.tokenSecret
-            ),
+            token,
             user: registeredUserObject
           }
         })
@@ -209,6 +207,7 @@ const login = (req, res) => {
     return inputsObject
   }
 
+  let token
   const modifiedInputValues = inputVals.reduce(combineInputsInObjReducer, {})
 
   req.Models.User.findOne({
@@ -230,7 +229,7 @@ const login = (req, res) => {
         userIsNotRegisteredForRole.statusCode = 400
         return Promise.reject(userIsNotRegisteredForRole)
       }
-      const token = new TokenManager()
+
       if (hash(req.body.password) !== registeredUser.password) {
         const passwordDoesNotMatchError = new Error()
         passwordDoesNotMatchError.message = 'password does not match record'
@@ -238,19 +237,27 @@ const login = (req, res) => {
         return Promise.reject(passwordDoesNotMatchError)
       }
 
-      const registeredUserObject = registeredUser.toObject()
-      delete registeredUserObject.password
+      token = new TokenManager().create(
+        {
+          id: registeredUser._id,
+          role: req.body.role
+        }, config.tokenSecret
+      )
+
+      return req.Models.User.findOneAndUpdate({
+        _id: registeredUser._id
+      }, { token },
+      { new: true })
+    })
+    .then((updatedUser) => {
+      const updatedUserObject = updatedUser.toObject()
+      delete updatedUserObject.password
       return res.status(201).send({
         message: 'User successfully logged in',
         statusCode: 201,
         data: {
-          token: token.create(
-            {
-              id: registeredUser._id,
-              role: req.body.role
-            }, config.tokenSecret
-          ),
-          user: registeredUserObject
+          token,
+          user: updatedUserObject
         }
       })
     })
@@ -677,6 +684,14 @@ const removeVendorFromFavorites = (req, res) => {
       }))
 }
 
+
+/**
+ * View favorite vendor
+ * @param {Object} req
+ * @param {Object} res
+ *
+ * @return {Object} res response object
+ */
 const viewFavoriteVendor = (req, res) => {
   const { currentUser } = req
   req.Models.User.findOne({ _id: currentUser._id })
