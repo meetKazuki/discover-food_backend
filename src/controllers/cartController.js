@@ -22,7 +22,7 @@ const createCart = (req, res) => {
   return req.Models.Meal.findOne({
     _id: mealId
   })
-    .populate('vendor')
+    .populate('vendor', '-password')
     .exec()
     .then((mealExists) => {
       if (!mealExists) {
@@ -43,7 +43,9 @@ const createCart = (req, res) => {
           .then(createdCart => res.status(201).send({
             statusCode: 201,
             message: 'Cart successfully created',
-            data: [createdCart]
+            data: {
+              cart: createdCart
+            }
           }))
       }
 
@@ -81,7 +83,7 @@ const deleteMealInCart = (req, res) => {
   req.Models.Meal.findOne({
     _id: mealId
   })
-    .populate('vendor')
+    .populate('vendor', '-password')
     .exec()
     .then((mealExists) => {
       if (!mealExists) {
@@ -105,9 +107,7 @@ const deleteMealInCart = (req, res) => {
 
       return req.Models.Cart.findOne({
         _id: userCart._id
-      }, {
-        new: true
-      })
+      }, { new: true })
         .select('cartItems')
         .exec()
     })
@@ -119,12 +119,8 @@ const deleteMealInCart = (req, res) => {
         return req.Models.Cart.findOneAndUpdate({
           _id: cartToUpdate._id
         },
-        {
-          cartItems: cartToUpdate.cartItems
-        },
-        {
-          new: true
-        })
+        { cartItems: cartToUpdate.cartItems },
+        { new: true })
       }
 
       const mealNotInCart = new Error()
@@ -135,7 +131,9 @@ const deleteMealInCart = (req, res) => {
     .then(deletedCartMeal => res.status(201).send({
       statusCode: 201,
       message: 'Cart successfully deleted meal from cart',
-      data: [deletedCartMeal]
+      data: {
+        cart: deletedCartMeal
+      }
     }))
     .catch(err => res.status(err.statusCode ? err.statusCode : 500)
       .send({ message: err.message ? err.message : 'Something something went wrong, could not to cart' }))
@@ -166,7 +164,7 @@ const addMealToCart = (req, res) => {
   return req.Models.Meal.findOne({
     _id: mealId
   })
-    .populate('vendor')
+    .populate('vendor', '-password')
     .exec()
     .then((mealExists) => {
       if (!mealExists) {
@@ -207,9 +205,9 @@ const addMealToCart = (req, res) => {
           cartItems: cartToUpdate.cartItems.concat([meal._id]),
           totalPrice
         },
-        {
-          new: true
-        })
+        { new: true })
+          .populate('cartItems')
+          .exec()
       }
 
       const mealNotInCart = new Error()
@@ -220,7 +218,9 @@ const addMealToCart = (req, res) => {
     .then(addedCartItem => res.status(201).send({
       statusCode: 201,
       message: 'Cart successfully added',
-      data: [addedCartItem]
+      data: {
+        cart: addedCartItem
+      }
     }))
     .catch(err => res.status(err.statusCode ? err.statusCode : 500)
       .send({ message: err.message ? err.message : 'Something something went wrong, could not to cart' }))
@@ -240,7 +240,7 @@ const viewCartItems = (req, res) => {
   return req.Models.Cart.findOne({
     user: currentUser._id
   })
-    .populate('user')
+    .populate('user', '-password')
     .populate('cartItems')
     .exec()
     .then((userCart) => {
@@ -254,7 +254,9 @@ const viewCartItems = (req, res) => {
       return res.status(200).send({
         statusCode: 200,
         message: 'User get cart details successful',
-        data: [userCart]
+        data: {
+          cart: userCart
+        }
       })
     })
     .catch(err => res.status(err.statusCode ? err.statusCode : 500)

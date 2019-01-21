@@ -7,6 +7,9 @@ const Point = require('./point')
 const MealImage = require('./mealImage')
 const MealRating = require('./mealRating')
 const Admin = require('./admin')
+const Wallet = require('./wallet')
+const VendorWallet = require('./vendorWallet')
+const Transaction = require('./transaction')
 
 module.exports = {
   User,
@@ -17,5 +20,8 @@ module.exports = {
   Point,
   MealImage,
   MealRating,
-  Admin
+  Admin,
+  Wallet,
+  Transaction,
+  VendorWallet
 }

@@ -684,6 +684,14 @@ const removeVendorFromFavorites = (req, res) => {
       }))
 }
 
+
+/**
+ * View favorite vendor
+ * @param {Object} req
+ * @param {Object} res
+ *
+ * @return {Object} res response object
+ */
 const viewFavoriteVendor = (req, res) => {
   const { currentUser } = req
   req.Models.User.findOne({ _id: currentUser._id })
