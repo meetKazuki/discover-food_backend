@@ -101,7 +101,43 @@ const createVendorWallet = (req, res) => {
       }))
 }
 
+/**
+ * Get a vendor wallet
+ * @param {Object} req request object
+ * @param {Object} res response object
+ *
+ * @return {Object} res response object
+ */
+const getVendorWallet = (req, res) => {
+  const { currentUser } = req
+  req.Models.VendorWallet.findOne({
+    user: currentUser._id
+  })
+    .populate('user', '-password')
+    .exec()
+    .then((walletExists) => {
+      if (!walletExists) {
+        const walletDoesNotExistError = new Error()
+        walletDoesNotExistError.message = 'wallet does not exist'
+        walletDoesNotExistError.statusCode = 400
+
+        return Promise.reject(walletDoesNotExistError)
+      }
+
+      return res.status(200)
+        .send({
+          statusCode: 200,
+          message: 'wallet successfully fetched',
+          wallet: walletExists
+        })
+    })
+    .catch(err => res.status(err.statusCode ? err.statusCode : 500)
+      .send({
+        message: err.message ? err.message : 'Something something went wrong, could not get user wallet'
+      }))
+}
 
 module.exports = {
-  createVendorWallet
+  createVendorWallet,
+  getVendorWallet
 }

@@ -6,6 +6,7 @@ const authorize = require('../../utils/authorize')
 const router = express.Router()
 
 router.post('/vendor/wallet/create', authorize('vendor'), vendorWalletController.createVendorWallet)
+router.get('/vendor/wallet', authorize('vendor'), vendorWalletController.getVendorWallet)
 // router.patch('/wallet/user-deposit', authorize('user'), vendorWalletController.walletDeposit)
 // router.get('/user/wallet/', authorize('user'), vendorWalletController.getUserWallet)
 // router.get('/user/transactions', authorize('user'), vendorWalletController.getUserTransactions)
