@@ -51,7 +51,8 @@ const editProfile = (req, res) => {
     'location',
     'userType',
     'businessName',
-    'foodType'
+    'foodType',
+    'address'
   ]
   const inputVals = fieldInputs.filter(fieldInput => req.body[fieldInput])
     .map(value => ({

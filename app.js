@@ -2,6 +2,9 @@ const express = require('express')
 const path = require('path')
 const morgan = require('morgan')
 const cors = require('cors')
+const https = require('https')
+const fs = require('fs')
+
 
 const db = require('./utils/db')
 const config = require('./config/index.js')
@@ -11,6 +14,11 @@ const logger = require('./config/logger')
 
 // Models
 const Models = require('./src/models')
+
+const privateKey = fs.readFileSync('./sslCert/key.pem')
+const certificate = fs.readFileSync('./sslCert/cert.pem')
+
+const credentials = { key: privateKey, cert: certificate }
 
 const app = express()
 
@@ -42,7 +50,7 @@ app.use((err, req, res, next) => {
 })
 
 db.connect(config.dbUrl)
-
-app.listen(config.port)
-
-logger.log(`Listening @ port ${config.port}`)
+https.createServer(credentials, app)
+  .listen(config.port, () => {
+    logger.log(`Listening @ port ${config.port}`)
+  })

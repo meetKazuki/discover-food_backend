@@ -356,7 +356,7 @@ const createMealRating = (req, res) => {
     .then(createdMealRating => req.Models.MealRating.findById({
       _id: createdMealRating._id
     })
-      .populate('user')
+      .populate('user', '-password')
       .populate('meal')
       .exec())
     .then(mealRating => res.status(200).send({
@@ -431,7 +431,7 @@ const changeMealRating = (req, res) => {
       }, {
         rating: modifiedInputValues.mealRating
       }, { new: true })
-        .populate('user')
+        .populate('user', '-password')
         .populate('meal')
         .exec()
     })
@@ -517,7 +517,7 @@ const viewAllMeals = (req, res) => {
   req.Models.Meal.find()
     .skip(perPage * (page - 1))
     .limit(perPage)
-    .populate('vendor')
+    .populate('vendor', '-password')
     .exec()
     .then((meals) => {
       if (!meals) {
@@ -559,7 +559,7 @@ const viewAllVendorMeals = (req, res) => {
   })
     .skip(perPage * (page - 1))
     .limit(perPage)
-    .populate('vendor')
+    .populate('vendor', '-password')
     .exec()
     .then((meals) => {
       if (!meals) {
