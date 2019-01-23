@@ -70,7 +70,12 @@ const createVendorWallet = (req, res) => {
         return req.Models.VendorWallet.create({
           amount: modifiedInputValues.amount,
           user: currentUser._id,
-          subAccountCode: subAccountInfo.data.subaccount_code
+          subAccountCode: subAccountInfo.data.subaccount_code,
+          accountInfo: {
+            businessName: modifiedInputValues.business_name,
+            accountNumber: modifiedInputValues.account_number,
+            settlementBank: modifiedInputValues.settlement_bank
+          }
         })
       }
 

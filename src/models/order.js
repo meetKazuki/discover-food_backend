@@ -2,10 +2,7 @@ const mongoose = require('mongoose')
 
 const { Schema } = mongoose
 
-const Order = Schema({
-  dateCreated: {
-    type: Date
-  },
+const Order = new Schema({
   customer: {
     type: Schema.Types.ObjectId, ref: 'User'
   },
@@ -26,7 +23,12 @@ const Order = Schema({
   },
   amount: {
     type: Number
+  },
+  status: {
+    type: String
   }
+}, {
+  timestamps: true
 })
 
 module.exports = mongoose.model('Order', Order)

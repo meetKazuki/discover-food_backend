@@ -18,6 +18,7 @@ const createCart = (req, res) => {
   }
 
   let meal
+  const status = 'open'
   // Verify that meal exists
   return req.Models.Meal.findOne({
     _id: mealId
@@ -39,7 +40,8 @@ const createCart = (req, res) => {
     .then((userCart) => {
       const Cart = new req.Models.Cart()
       if (!userCart) {
-        return Cart.createCart(meal, currentUser, req.body.orderType, req.body.foodSize)
+        return Cart.createCart(meal,
+          currentUser, status)
           .then(createdCart => res.status(201).send({
             statusCode: 201,
             message: 'Cart successfully created',

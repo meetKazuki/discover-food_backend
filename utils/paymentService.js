@@ -468,6 +468,58 @@ const createSubaccount = paystackSubaccountData => new Promise((resolve, reject)
   req.end()
 })
 
+/**
+ * Initialize a transaction
+ * @param {Object} transactionInfo the configuration for the paystack service
+ * @return {Promise} promise
+ */
+const initializeTransaction = transactionInfo => new Promise((resolve, reject) => {
+  const stringPayload = JSON.stringify(transactionInfo)
+  const requestDetails = {
+    protocol: 'https:',
+    hostname: 'api.paystack.co',
+    method: 'POST',
+    path: '/transaction/initialize',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${config.paystackSecretKey}`
+    }
+  }
+
+  const req = https.request(requestDetails, (res) => {
+    const status = res.statusCode
+    if (status === 200 || status === 201) {
+      let body = ''
+      res.on('data', (data) => {
+        body += data
+      })
+      return res.on('end', () => {
+        const parsed = JSON.parse(body)
+        return resolve(parsed)
+      })
+    }
+    let err = ''
+    res.on('data', (data) => {
+      err += data
+    })
+    return res.on('end', () => {
+      const parsed = JSON.parse(err)
+      const payStackError = new Error()
+      payStackError.statusCode = status
+      payStackError.message = parsed.message
+      return reject(payStackError)
+    })
+  })
+
+  req.on('error', (e) => {
+    reject(e)
+  })
+
+  req.write(stringPayload)
+
+  req.end()
+})
+
 module.exports = {
   createCharge,
   getBanks,
@@ -477,5 +529,6 @@ module.exports = {
   createRefund,
   submitOtp,
   createTransferRecipient,
-  createSubaccount
+  createSubaccount,
+  initializeTransaction
 }
