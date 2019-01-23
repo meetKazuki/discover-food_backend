@@ -11,6 +11,17 @@ const VendorWallet = new Schema({
   },
   subAccountCode: {
     type: String
+  },
+  accountInfo: {
+    businessName: {
+      type: String
+    },
+    settlementBank: {
+      type: String
+    },
+    accountNumber: {
+      type: String
+    }
   }
 }, {
   timestamps: true

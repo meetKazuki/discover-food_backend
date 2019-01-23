@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 
 const { Schema } = mongoose
 
-const Cart = Schema({
+const Cart = new Schema({
   user: {
     type: Schema.Types.ObjectId, ref: 'User'
   },
@@ -14,14 +14,20 @@ const Cart = Schema({
   },
   totalPrice: {
     type: Number
+  },
+  status: {
+    type: String
   }
+}, {
+  timestamps: true
 })
 
-Cart.method('createCart', function (meal, user) {
+Cart.method('createCart', function (meal, user, status) {
   this.cartItems.push(meal._id)
   this.totalQuantity = this.cartItems.length
   this.totalPrice = meal.pricePerOrderSize
   this.vendor = meal.vendor._id
+  this.status = status
   this.user = user._id
   return this.save()
 })

@@ -3,6 +3,10 @@ const {
 } = require('../../utils/paymentService')
 
 const {
+  hasEmptyField
+} = require('../../utils/validator')
+
+const {
   TRANSFER,
   WITHDRAWAL,
   DEPOSIT
@@ -17,19 +21,28 @@ const {
  */
 const fundWallet = (req, res) => {
   const { currentUser } = req
+
+  // const fieldIsEmpty = hasEmptyField([
+  //   'firstName',
+  //   'lastName',
+  //   'phone',
+  //   'email',
+  //   'password',
+  //   'role'
+  // ], req.body)
+
   const inputVals = [
     'cardCvv',
     'cardNumber',
     'expiryMonth',
     'expiryYear',
-    'pin',
     'amount'
   ].filter(fieldInput => req.body[fieldInput])
     .map(value => ({
       [value]: req.body[value]
     }))
 
-  if (!inputVals.length) {
+  if (!inputVals) {
     const missingFieldError = new Error()
     missingFieldError.message = 'Field is missing'
     missingFieldError.statusCode = 400
