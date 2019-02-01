@@ -244,12 +244,6 @@ const viewCartItems = (req, res) => {
   })
     .populate('user', '-password')
     .populate('cartItems')
-    .populate('vendor', '-password')
-    .populate({
-      path: 'cartItems',
-      // Get friends of friends - populate the 'friends' array for every friend
-      populate: { path: 'vendor', select: '-password' }
-    })
     .exec()
     .then((userCart) => {
       if (!userCart) {
