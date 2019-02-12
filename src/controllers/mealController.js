@@ -15,7 +15,8 @@ const createMeal = (req, res) => {
     'orderSize',
     'pricePerOrderSize',
     'quantity',
-    'timeToPrepare'
+    'timeToPrepare',
+    'orderType'
   ]
   const inputVals = fieldInputs
     .filter(fieldInput => req.body[fieldInput])
@@ -75,9 +76,9 @@ const editMeal = (req, res) => {
     'description',
     'orderSize',
     'pricePerOrderSize',
-    'orderType',
     'quantity',
-    'timeToPrepare'
+    'timeToPrepare',
+    'orderType'
   ]
   const inputVals = fieldInputs.filter(fieldInput => req.body[fieldInput])
     .map(value => ({
