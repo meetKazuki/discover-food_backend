@@ -9,6 +9,9 @@ environments.development = {
   dbUrl: process.env.DATABASE_SERVER,
   tokenSecret: process.env.TOKEN_SECRET,
   hashSecret: process.env.HASH_SECRET,
+  quickSmsUsername: process.env.QUICK_SMS_USERNAME,
+  quickSmsPassword: process.env.QUICK_SMS_PASSWORD,
+  otpSecret: process.env.OTP_SECRET,
   mailjetPublicKey: process.env.MAIL_JET_PUBLIC_KEY,
   mailjetSecretKey: process.env.MAIL_JET_SECRET_KEY,
   mailjetEmailSender: process.env.MAIL_JET_EMAIL_SENDER,
@@ -27,6 +30,7 @@ environments.production = {
   dbUrl: process.env.DATABASE_SERVER,
   tokenSecret: process.env.TOKEN_SECRET,
   hashSecret: process.env.HASH_SECRET,
+  otpSecret: process.env.OTP_SECRET,
   mailjetPublicKey: process.env.MAIL_JET_PUBLIC_KEY,
   mailjetSecretKey: process.env.MAIL_JET_SECRET_KEY,
   mailjetEmailSender: process.env.MAIL_JET_EMAIL_SENDER,
@@ -34,7 +38,9 @@ environments.production = {
   paystackPublicKey: process.env.PAYSTACK_PUBLIC_KEY,
   paystackSecretKey: process.env.PAYSTACK_SECRET_KEY,
   geocodingApiKey: process.env.GEOCODING_API_KEY,
-  distanceMatrixApiKey: process.env.DISTANCE_MATRIX_API_KEY
+  distanceMatrixApiKey: process.env.DISTANCE_MATRIX_API_KEY,
+  firebaseCloudMessagingApiKey: process.env.FIREBASE_CLOUD_MSG_API_KEY,
+  firebaseCloudMessagingRegWebToken: process.env.FIREBASE_CLOUD_MSG_REG_WEB_TOKEN
 }
 
 const currentEnvironment = typeof process.env.NODE_ENV === 'string'

@@ -1,7 +1,11 @@
 const crypto = require('crypto')
+const otplib = require('otplib')
 
 const TokenManager = require('../../utils/token')
 const EmailServiceManager = require('../../utils/emailService')
+const {
+  sendTextMessage
+} = require('../../utils/textService')
 // const {
 //   pushNotificationService
 // } = require('../../utils/pushNotificationService')
@@ -708,6 +712,52 @@ const viewFavoriteVendor = (req, res) => {
     }))
 }
 
+/**
+ * Send One time password(OTP) for two factor authentication
+ * @param {Object} req request object
+ * @param {Object} res response object
+ *
+ * @return {Object} res response object
+ */
+const sendOtp = (req, res) => {
+  const fieldIsEmpty = hasEmptyField([
+    'phone'
+  ], req.body)
+
+  if (fieldIsEmpty) {
+    const missingFieldError = new Error()
+    missingFieldError.message = 'Missing required field'
+    missingFieldError.statusCode = 400
+    return res.status(400).send(missingFieldError)
+  }
+
+  const token = otplib.authenticator.generate(config.otpSecret)
+
+  // username=user&password=1234&sender=quicsms1&message=testing &recipient=2348030000000,
+  // 23480xxxxxxxx&report=1&convert=1&route=1
+
+  sendTextMessage({
+    username: config.quickSmsUsername,
+    password: config.quickSmsPassword,
+    sendor: 'Fuudnet',
+    message: token,
+    recipient: req.body.phone,
+    explain: 'true',
+    convert: 1,
+    route: 1
+  })
+    .then(message => res.status(201).send({
+      message: 'otp successfully sent',
+      data: message,
+      statusCode: 201
+    }))
+    .catch(() => {
+      const sentTextError = new Error()
+      sentTextError.message = 'Otp not sent'
+      return res.status(401).send(sentTextError)
+    })
+}
+
 module.exports = {
   login,
   register,
@@ -717,5 +767,6 @@ module.exports = {
   editProfile,
   viewFavoriteVendor,
   addVendorToFavorites,
-  removeVendorFromFavorites
+  removeVendorFromFavorites,
+  sendOtp
 }

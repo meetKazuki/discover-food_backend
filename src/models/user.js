@@ -66,8 +66,12 @@ const User = new Schema({
   token: {
     type: String
   },
-  image: {
+  imageUrl: {
     type: String
+  },
+  verified: {
+    type: Boolean,
+    default: false,
   },
   address: {
     type: String
@@ -79,7 +83,8 @@ const User = new Schema({
     },
     coordinates: {
       type: [Number],
-      index: '2dsphere'
+      index: '2dsphere',
+      default: []
     }
   },
   favoriteVendors: [{

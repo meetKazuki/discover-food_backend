@@ -18,6 +18,7 @@
     "node-gcm": "^1.0.2",
     "node-geocoder": "^3.22.0",
     "node-mailjet": "^3.3.1",
+    "otplib": "^10.0.1",
     "paystack": "^2.0.1",
     "validator": "^10.9.0"
   },

@@ -37,6 +37,7 @@ const createMeal = (req, res) => {
     return inputsObject
   }
   const modifiedInputValues = inputVals.reduce(combineInputsInObjReducer, {})
+  modifiedInputValues.location = currentUser.location
 
   modifiedInputValues.vendor = currentUser._id
   return req.Models.Meal.create(modifiedInputValues)
@@ -484,16 +485,27 @@ const searchForMeals = (req, res) => {
 
   const modifiedInputValues = inputVals.reduce(combineInputsInObjReducer, {})
 
-  req.Models.Meal.find({
-    $text: {
-      $search: modifiedInputValues.searchText
+  if (modifiedInputValues.location) {
+    const { latitude } = modifiedInputValues.location
+    const { longitude } = modifiedInputValues.location
+    modifiedInputValues.location = {
+      coordinates: [latitude, longitude]
     }
-    // location: {
-    //   $near: modifiedInputValues.location ? modifiedInputValues : [],
-    //   maxDist: 1000
-    // }
-  })
-    // .populate('vendor')
+  }
+
+  req.Models.Meal
+    .find({
+      $text: {
+        $search: modifiedInputValues.searchText ?
+          modifiedInputValues.searchText : ''
+      },
+      'location.coordinates': {
+        $geoWithin: {
+          $center: modifiedInputValues.location ?
+            [modifiedInputValues.location.coordinates, 1000] : [[0, 0], 1000]
+        }
+      }
+    })
     .populate({ path: 'vendor', populate: { path: 'user' } })
     .exec()
     .then((searchResult) => {
